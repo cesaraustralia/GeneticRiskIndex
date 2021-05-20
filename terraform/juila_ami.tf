@@ -27,14 +27,11 @@ resource "aws_instance" "julia-ami-template" {
   provisioner "local-exec" {
     command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u root -i '${self.public_ip},' --private-key ${var.pvt_key} -e 'pub_key=${var.pub_key}' ../ansible/julia.yml"
   }
-
-  provisioner "local-exec" {
-    command = "julia --project=${var.julia_project_dir} -e 'using Pkg; Pkg.instantiate()'"
-  }
 }
 
 # Create an ami image from the 
 resource "aws_ami_from_instance" "julia-ami" {
   name               = "julia-ami"
+  depends_on = [aws_instance.julia-ami-template]
   source_instance_id = aws_instance.julia-ami-template.id
 }
