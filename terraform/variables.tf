@@ -3,50 +3,67 @@
 # Override in your main.tfvars file in this directory
 
 variable "project" {
+  type = string
   default = "unnamed"
 }
 
+variable "taxon_ids" {
+  type = list(number)
+  default = [1001]
+}
+
 variable "r_instance_type" {
+  type = string
   default = "t2.micro"
 }
 
 variable "julia_instance_type" {
+  type = string
   default = "t2.micro"
 }
 
 variable "julia_project_dir" {
+  type = string
   default = "~/"
 }
 
 variable "julia_cpus" {
-  default = "1"
+  type = number
+  default = 1
 }
 
 variable "julia_instance_memory" {
+  type = number
   default = 1024
 }
 
 variable "julia_instance_count" {
+  type = number
   default = 1
 }
 
 variable "aws_region" {
+  type = string
   default = "ap-southeast-2"
 }
 
 variable "aws_access_key" {
+  type = string
   default = ""
 }
 
 variable "aws_secret_key" {
+  type = string
   default = ""
 }
 
 variable "pvt_key" {
+  type = string
   default = ""
 }
 
 variable "pub_key" {
+  type = string
   default = ""
 }
 

@@ -1,8 +1,17 @@
+
+# Load all taxa that need circuitscape, from csv 
+locals {
+  taxa = csvdecode(file("taxa.csv"))
+}
+
+# Define a task for each taxon that will run 
+# a separate server with julia/circuitscape
 resource "aws_ecs_task_definition" "julia-task" {
+  for_each = {for taxon in local.taxa: taxon.taxon_id => taxon}
   family = "julia-task"
   container_definitions = jsonencode([
     {
-      name      = "julia"
+      name      = "${var.project}-julia-id-${each.key}"
       image     = "julia-ami"
       cpu       = var.julia_cpus
       memory    = var.julia_instance_memory
@@ -26,4 +35,10 @@ resource "aws_ecs_task_definition" "julia-task" {
     type       = "memberOf"
     expression = "attribute:ecs.availability-zone in [${var.aws_region}]"
   }
+
+  provisioner "file" {
+    content = each.key
+    destination = "~/taxon_id"
+  }
+
 }

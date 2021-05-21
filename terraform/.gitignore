@@ -2,3 +2,5 @@
 .terraform
 .terraform*
 cesar*
+*.auto.*
+*.csv
