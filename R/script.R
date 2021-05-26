@@ -1,5 +1,5 @@
 source("functions.R")
-path <- "/home/raf/Work/cesar/risk/GeneticRiskIndex/data"
+path <- "../data"
 taxon_csv <- "../../DELWPshort.csv"
 mask_layer <- terra::rast("../data/sbv.tif")
 mask_layer <- mask_layer < 0
