@@ -14,9 +14,9 @@ METRIC_EPSG <- 3111
 LATLON_EPSG <- 4326
 
 # Get taxon observations from ALA using `galah`
-load_species_observations <- function(species) {
+get_observations <- function(taxon) {
   obs <- ala_occurrences(
-    taxa = select_taxa(species),
+    taxa = select_taxa(taxon),
     filters = select_filters(
       year = c(1960:2021), 
       # basisOfRecord = "Human Observaion",
@@ -94,7 +94,7 @@ process_obs <- function(obs, params, taxonid, mask_layer, path) {
 process_taxon <- function(params, taxonid, mask_layer, path) {
   print(paste0("Taxon ID: ", taxonid))
   taxon <- dplyr::filter(params, Taxon.Id == taxonid)
-  obs <- load_species_observations(taxon$ALA.taxon) %>%
+  obs <- get_observations(taxon$ALA.taxon) %>%
     drop_na(any_of(c("decimalLatitude", "decimalLongitude")))
   process_obs(obs, params, taxonid, mask_layer, path)
 }
