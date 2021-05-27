@@ -1,17 +1,65 @@
 # Retrieving observation data from ALA ######################################################
 
 # Get taxon observations from ALA using `galah`
-get_observations <- function(taxon) {
-  print(paste0("  Retrieving observations from ALA for ", taxon))
+get_observations <- function(taxon_name) {
+  print(paste0("  Retrieving observations from ALA for ", taxon_name))
   obs <- ala_occurrences(
-    taxa = select_taxa(taxon),
-    filters = FILTERS,
+    taxa = select_taxa(taxon_name),
+    filters = select_filters(
+      year = TIMESPAN,
+      basis_of_record = BASIS,
+      stateProvince = STATE
+    ),
   )
   return(obs)
 }
 
 
 # Manipulating observation data ######################################################
+
+cluster_taxa <- function(taxa, mask_layer, path) {
+  for (taxonid in taxa$Taxon.Id) {
+    cluster_taxon(taxa, taxonid, mask_layer, path)
+  }
+}
+
+# Retrieve observations, filter and process for a single taxon
+cluster_taxon <- function(taxa, taxonid, mask_layer, path) {
+  print(paste0("Taxon ID: ", taxonid))
+  taxon <- filter(taxa, Taxon.Id == taxonid)
+  get_observations(taxon$ALA.taxon) %>% 
+    prefilter_obs() %>%
+    process_obs(taxon, mask_layer, path)
+}
+
+
+# Prefilter observations data #####
+
+prefilter_obs <- function(obs) {
+  obs %>% remove_missing_coords() %>%
+          remove_location_duplicates()
+}
+
+remove_missing_coords <- function(obs) {
+  drop_na(obs, any_of(c("decimalLatitude", "decimalLongitude")))
+}
+
+remove_location_duplicates <- function(obs) {
+  # Sort by date first so we take the newest record
+  obs %>% arrange(desc(eventDate)) %>%
+    distinct(decimalLatitude, decimalLongitude, .keep_all = TRUE)
+}
+
+
+# Processs observations to generate raster files with clustering #####
+
+process_obs <- function(obs, taxon, mask_layer, path) {
+  print(paste0("  num observations: ", nrow(obs)))
+  eps <- taxon$epsilon
+  obs %>% add_euclidan_coords() %>% 
+          add_clusters(eps) %>%
+          write_rasters(taxon, eps, mask_layer, path)
+}
 
 # Add transformed coordinates "x" an "y" for accurate distance calculations
 add_euclidan_coords <- function(obs) {
@@ -44,48 +92,25 @@ buffer_orphans <- function(geoms, eps) {
 }
 
 # Write the clustered and orphan observations to raster files
-write_rasters <- function(obs, eps, mask_layer, path) {
+write_rasters <- function(obs, taxon, eps, mask_layer, path) {
   geoms <- sf::st_as_sf(obs, coords = c("x", "y"), crs = METRIC_EPSG)
   clustered <- buffer_clustered(geoms, eps)
   orphans <- buffer_orphans(geoms, eps)
-  if(!is.null(nrow(clustered))){
-    geom_to_raster(clustered, "clusters", mask_layer, path)
-  }
-  if(!is.null(nrow(orphans))){
-    geom_to_raster(orphans, "orphans", mask_layer, path)
-  }
+  geom_to_raster(orphans, "orphans", taxon, mask_layer, path)
+  geom_to_raster(clustered, "clusters", taxon, mask_layer, path)
 }
 
 # Convert points to raster file matching mask_layer
-geom_to_raster <- function(geom, name, mask_layer, path) {
+geom_to_raster <- function(geom, type, taxon, mask_layer, path) {
   # convert points to raster
-  call_obs <- terra::extract(mask_layer, vect(geom), cells = TRUE) %>% 
+  cell_obs <- terra::extract(mask_layer, vect(geom), cells = TRUE) %>% 
     pull(cell) %>% 
     unlist()
   obs_raster <- mask_layer
-  obs_raster[call_obs] <- 1
+  obs_raster[cell_obs] <- 1
   # write it to disk
-  filename = paste0(path, taxonid, "_", name, ".asc")
+  filename = file.path(taxon_path(taxon, path), paste0(type, ".asc"))
   print(paste0("Writing ", filename))
-  terra::writeRaster(obs_raster, filename)
-}
-
-process_obs <- function(obs, params, taxonid, mask_layer, path) {
-  print(paste0("  num observations: ", nrow(obs)))
-  eps <- params$epsilon[which(params$Taxon.Id == taxonids[[1]])]
-  obs_euc <- add_euclidan_coords(obs)
-  obs_cl <- add_clusters(obs_euc, eps)
-  write_rasters(obs_cl, eps, mask_layer, path)
-}
-
-prefilter_obs <- function(obs) {
-    drop_na(obs, any_of(c("decimalLatitude", "decimalLongitude")))
-}
-
-process_taxon <- function(params, taxonid, mask_layer, path) {
-  print(paste0("Taxon ID: ", taxonid))
-  taxon <- dplyr::filter(params, Taxon.Id == taxonid)
-  obs <- get_observations(taxon$ALA.taxon) %>% 
-    prefilter_obs()
-  process_obs(obs, params, taxonid, mask_layer, path)
+  terra::writeRaster(obs_raster, filename, overwrite=true)
+  return(filename)
 }
