@@ -1,30 +1,17 @@
-library(sf)
-library(galah)
-library(fpc)
-library(terra)
-library(fasterize)
-library(futile.logger)
-library(sf)
-library(tidyverse) # includes dplyr & readr
-library(lubridate)
-
-# metric reference system epsg code
-METRIC_EPSG <- 3111
-# lat/lon reference system epsg code
-LATLON_EPSG <- 4326
+# Retrieving observation data from ALA ######################################################
 
 # Get taxon observations from ALA using `galah`
 get_observations <- function(taxon) {
+  print(paste0("  Retrieving observations from ALA for ", taxon))
   obs <- ala_occurrences(
     taxa = select_taxa(taxon),
-    filters = select_filters(
-      year = c(1960:2021), 
-      # basisOfRecord = "Human Observaion",
-      stateProvince = "Victoria"
-    )
+    filters = FILTERS,
   )
   return(obs)
 }
+
+
+# Manipulating observation data ######################################################
 
 # Add transformed coordinates "x" an "y" for accurate distance calculations
 add_euclidan_coords <- function(obs) {
@@ -91,10 +78,14 @@ process_obs <- function(obs, params, taxonid, mask_layer, path) {
   write_rasters(obs_cl, eps, mask_layer, path)
 }
 
+prefilter_obs <- function(obs) {
+    drop_na(obs, any_of(c("decimalLatitude", "decimalLongitude")))
+}
+
 process_taxon <- function(params, taxonid, mask_layer, path) {
   print(paste0("Taxon ID: ", taxonid))
   taxon <- dplyr::filter(params, Taxon.Id == taxonid)
-  obs <- get_observations(taxon$ALA.taxon) %>%
-    drop_na(any_of(c("decimalLatitude", "decimalLongitude")))
+  obs <- get_observations(taxon$ALA.taxon) %>% 
+    prefilter_obs()
   process_obs(obs, params, taxonid, mask_layer, path)
 }
