@@ -1,7 +1,8 @@
 source("common.R")
 source("prefilter.R")
-source("download_hdm.R")
 source("observations.R")
+source("resistance.R")
+source("distance.R")
 
 ala_config(email="rafaelschouten@gmail.com")
 path <- "/home/raf/Work/cesar/risk/GeneticRiskIndex/data"
@@ -17,7 +18,7 @@ STATE <- "Victoria"
 TIMESPAN <- c(1960:2021)
 BASIS <- "HumanObservation"
 
-mask_layer <- terra::rast("../data/sbv.tif") < 0
+mask_layer <- terra::rast(file.path(path, "sbv.tif")) < 0
 terra::crs(mask_layer) <- as.character(sp::CRS(paste0("+init=epsg:", METRIC_EPSG)))
 taxa_csv <- "../../DELWPshort.csv"
 # taxa_csv <- "../../DELWPmedium.csv"
@@ -48,4 +49,4 @@ filtered <- prefilter_obs(obs)
 fn <- process_obs(filtered, taxon, mask_layer, path)
 fn %>% terra::rast() %>% plot
 
-# find_field_values("species")
+find_field_values("species")
