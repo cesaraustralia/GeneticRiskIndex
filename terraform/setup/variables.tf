@@ -14,7 +14,7 @@ variable "r_instance_type" {
 
 variable "julia_instance_type" {
   type = string
-  default = "t2.medium"
+  default = "t2.small"
 }
 
 variable "aws_region" {
@@ -28,12 +28,12 @@ variable "aws_credentials" {
 
 variable "private_key" {
   type = string
-  default = "key"
+  default = "../key.pem"
 }
 
 variable "public_key" {
   type = string
-  default = "key.pub"
+  default = "../key.pem.pub"
 }
 
 # AMI names to match locations
@@ -43,6 +43,6 @@ variable "ami" {
 
   # see https://cloud-images.ubuntu.com/locator/ec2/
   default = {
-    "ap-southeast-2" = "ami-0ae0b19a90d6da41b" 
+    "ap-southeast-2" = "ami-03ec1fe05b3849c74" # Ubuntu 20.04 LTS amd64
   }
 }

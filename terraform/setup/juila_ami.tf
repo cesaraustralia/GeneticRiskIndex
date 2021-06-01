@@ -1,30 +1,21 @@
-
-# Instances #########################
-
 # This instance will be the image we use in our Fargate
 # container later on. For now we just install julia on it.
 resource "aws_instance" "julia-ami-template" {
-  ami           = lookup(var.ami, var.aws_region)
-  key_name      = aws_key_pair.keys.key_name
+  ami = data.aws_ami.ubuntu.id
   instance_type = var.julia_instance_type
+  key_name = aws_key_pair.aws_key.key_name
+  associate_public_ip_address = true
+  subnet_id = aws_subnet.main.id
+  vpc_security_group_ids = [aws_security_group.allow_http.id, aws_security_group.allow_ssh.id]
 
   tags = {
-    Name = "{var.project}-julia}"
-  }
-
-  provisioner "remote-exec" {
-    inline = ["echo Connected successfully!"]
-    connection {
-      host = self.public_ip
-      type = "ssh"
-      user = "root"
-      private_key = file(var.private_key)
-    }
+    Name = "${var.project}-julia"
   }
 
   # Run ansible to install julia on the instance
+  # We need `sleep 120` to let the instance start
   provisioner "local-exec" {
-    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u root -i '${self.public_ip},' --private-key ${var.private_key} -e 'pub_key=${var.public_key}' ../ansible/julia.yml"
+    command = "sleep 120; ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u ubuntu -i '${self.public_ip},' --private-key ${var.private_key} -e 'pub_key=${var.public_key}' ../../ansible/julia/julia.yml"
   }
 }
 

@@ -1,24 +1,22 @@
+
+
+
+
 resource "aws_instance" "r" {
-  ami           = lookup(var.ami, var.aws_region)
+  ami = data.aws_ami.ubuntu.id
   instance_type = var.r_instance_type
+  key_name = aws_key_pair.aws_key.key_name
+  associate_public_ip_address = true
+  subnet_id = aws_subnet.main.id
+  vpc_security_group_ids = [aws_security_group.allow_http.id, aws_security_group.allow_ssh.id]
 
   tags = {
     Name = "${var.project}-r"
   }
 
-  # Dummy task to make local-exec wait until the instance is ready
-  provisioner "remote-exec" {
-    inline = ["echo Connected successfully!"]
-
-    connection {
-      host        = self.public_ip
-      type        = "ssh"
-      user        = "root"
-      private_key = file(var.private_key)
-    }
-  }
-
+  # Run ansible to install R on the instance
+  # We need `sleep 120` to let the instance start
   provisioner "local-exec" {
-    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u root -i '${self.public_ip},' --private-key ${var.private_key} -e 'pub_key=${var.public_key}' ../ansible/r.yml"
+    command = "sleep 120; ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u ubuntu -i '${self.public_ip},' --private-key ${var.private_key} -e 'pub_key=${var.public_key}' ../../ansible/r.yml"
   }
 }
