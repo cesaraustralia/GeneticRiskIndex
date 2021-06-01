@@ -1,14 +1,12 @@
 ---
 - hosts: all
-  become: true # sudo/su
   roles:
-      - install_julia
-   
+      - {role: install_julia, become: yes}
+
   tasks:
   - name: Download julia project
     ansible.builtin.git:
-      repo: https://github.com/cesaraustralia/GeneticRiskIndex
-      dest: ~/GeneticRiskIndex
+        repo: https://github.com/cesaraustralia/GeneticRiskIndex
+        dest: ~/GeneticRiskIndex
   - name: Instantiate project dependencies
-    ansible.builtin.shell:
-      cmd: julia --project=~/GeneticRiskIndex/julia -e "using Pkg; Pkg.instantiate()"
+    command: julia --project=~/GeneticRiskIndex/julia -e "using Pkg; Pkg.instantiate()"
