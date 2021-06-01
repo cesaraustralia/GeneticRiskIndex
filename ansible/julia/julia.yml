@@ -4,9 +4,9 @@
       - {role: install_julia, become: yes}
 
   tasks:
-  - name: Download julia project
+  - name: Clone julia project
     ansible.builtin.git:
-        repo: https://github.com/cesaraustralia/GeneticRiskIndex
-        dest: ~/GeneticRiskIndex
+      repo: https://github.com/cesaraustralia/GeneticRiskIndex
+      dest: ~/GeneticRiskIndex
   - name: Instantiate project dependencies
     command: julia --project=~/GeneticRiskIndex/julia -e "using Pkg; Pkg.instantiate()"
