@@ -1,11 +1,13 @@
 # GeneticRiskIndex
 
-This repository contains reproducible infrastructure and application scripts for calculating extinction 
-risk index based on spatial separation of species, dispersal capacity, and landscape resistance processed 
-with Circuitscape.jl. It is written for species in Victoria, Australia using the ALA occurrence datasets.
+This repository contains reproducible infrastructure and application scripts for
+calculating extinction risk index based on spatial separation of species,
+dispersal capacity, and landscape resistance processed with Circuitscape.jl. It
+is written for species in Victoria, Australia using the ALA occurrence datasets.
 
-Terraform is used to build the required AWS infrastructure to process hundreds/thousands of
-species. AWS containers are provisioned with R/Julia using Ansible playbooks.
+Terraform is used to build the required Amazon Web Services (AWS) infrastructure
+to process hundreds/thousands of species. AWS containers are provisioned with R
+and Julia using [Ansible playbooks](https://docs.ansible.com/ansible/latest/user_guide/playbooks_intro.html).
 
 
 ## Setup
@@ -13,18 +15,16 @@ species. AWS containers are provisioned with R/Julia using Ansible playbooks.
 Software needed to run these scripts locally:
 - [terraform](https://www.terraform.io/)
 - [ansible](https://www.ansible.com/)
+- [aws cli](https://aws.amazon.com/cli/)
 
 On linux and mac these can be installed with most package managers (e.g. brew,
-apt, pacman) and run from the command line.
-
-On windows ansible will need [cygwin](https://www.cygwin.com/), while terraform
-has a [windows installer](https://www.terraform.io/downloads.html).
-
-It is recomended these scripts are run from linux, either a local machine, a vm
-or a server.
+apt, pacman) and run from the command line. On windows ansible will need
+[cygwin](https://www.cygwin.com/), while terraform has a [windows
+installer](https://www.terraform.io/downloads.html). It is recomended these
+scripts are run from linux, either a local machine, a vm or a server.
 
 Once terraform and ansible are installed, clone or download this repository to
-start.
+get started.
 
 
 ## R and Julia server images
@@ -53,6 +53,20 @@ You will be logged into a fully functioning system with all software and scripts
 needed for this project already installed.
 
 
+# AWS credentials
+
+aws cli handles storing your aws credentials in your system. 
+Terraform will use these to create instances in your account.
+
+
+Run:
+
+```
+aws configure
+```
+
+to set them, and follow the prompt.
+
 ## Running Tasks with Terraform
 
 The tasks in this project are run in on Amazon Web Services (AWS) using
@@ -79,8 +93,7 @@ Circuitscape tasks.
 **⚠  WARNING terraform can start hundreds of AWS containers** 
 
 Be careful with the contents of your terraform.tfvars file, and the size of the
-csv returned from step 1 and passed to step 2. The number of taxon rows is the
-number of Fargate containers that will be created.
+csv returned from step 1 and passed to step 2. The number of taxon rows is the number of Fargate containers that will be created.
 
 These variables also have direct effect of the cost of AWS servers. 
 Larger numbers are more expensive:
