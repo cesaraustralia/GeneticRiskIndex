@@ -4,12 +4,7 @@
 
 variable "project" {
   type = string
-  default = "unnamed"
-}
-
-variable "taxon_ids" {
-  type = list(number)
-  default = [1001]
+  default = "victoria-genetic-risk-index" 
 }
 
 variable "r_instance_type" {
@@ -19,27 +14,7 @@ variable "r_instance_type" {
 
 variable "julia_instance_type" {
   type = string
-  default = "t2.micro"
-}
-
-variable "julia_project_dir" {
-  type = string
-  default = "~/"
-}
-
-variable "julia_cpus" {
-  type = number
-  default = 1
-}
-
-variable "julia_instance_memory" {
-  type = number
-  default = 1024
-}
-
-variable "julia_instance_count" {
-  type = number
-  default = 1
+  default = "t2.medium"
 }
 
 variable "aws_region" {
@@ -47,24 +22,18 @@ variable "aws_region" {
   default = "ap-southeast-2"
 }
 
-variable "aws_access_key" {
+variable "aws_credentials" {
   type = string
-  default = ""
 }
 
-variable "aws_secret_key" {
+variable "private_key" {
   type = string
-  default = ""
+  default = "key"
 }
 
-variable "pvt_key" {
+variable "public_key" {
   type = string
-  default = ""
-}
-
-variable "pub_key" {
-  type = string
-  default = ""
+  default = "key.pub"
 }
 
 # AMI names to match locations

@@ -1,0 +1,3 @@
+project = "victoria-genetic-risk-index" 
+r_instance_type = "t2.micro"
+taxa_csv = "../../data/taxa.csv"
