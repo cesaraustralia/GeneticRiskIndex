@@ -16,9 +16,9 @@ resource "aws_instance" "julia-ami-template" {
     inline = ["echo Connected successfully!"]
 
     connection {
-      host        = self.public_ip
-      type        = "ssh"
-      user        = "root"
+      host = self.public_ip
+      type = "ssh"
+      user = "root"
       private_key = file(var.pvt_key)
     }
   }
@@ -31,7 +31,7 @@ resource "aws_instance" "julia-ami-template" {
 
 # Create an ami image from the 
 resource "aws_ami_from_instance" "julia-ami" {
-  name               = "julia-ami"
+  name = "julia-ami"
   depends_on = [aws_instance.julia-ami-template]
   source_instance_id = aws_instance.julia-ami-template.id
 }

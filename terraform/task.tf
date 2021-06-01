@@ -36,9 +36,8 @@ resource "aws_ecs_task_definition" "julia-task" {
     expression = "attribute:ecs.availability-zone in [${var.aws_region}]"
   }
 
-  provisioner "file" {
-    content = each.key
-    destination = "~/taxon_id"
+  provisioner "local-exec" {
+    command = "link -s /etc/efs-storage/taxon/${each.key} ~/taxon_data"
   }
 
 }
