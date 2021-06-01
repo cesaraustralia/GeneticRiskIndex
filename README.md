@@ -76,7 +76,7 @@ hundreds of containers.
 Circuitscape tasks.
 
 
-**⚠  WARNING terraform can start hundreds of AWS containers ** 
+**⚠  WARNING terraform can start hundreds of AWS containers** 
 
 Be careful with the contents of your terraform.tfvars file, and the size of the
 csv returned from step 1 and passed to step 2. The number of taxon rows is the
