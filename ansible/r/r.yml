@@ -14,3 +14,6 @@
       ansible.builtin.git:
         repo: https://github.com/cesaraustralia/GeneticRiskIndex
         dest: ~/GeneticRiskIndex
+    # We need this for shared folders
+    - name: Install nfs-utils
+      yum: name=nfs-utils state=latest

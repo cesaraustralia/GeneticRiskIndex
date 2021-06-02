@@ -9,7 +9,7 @@ variable "project" {
 
 variable "r_instance_type" {
   type = string
-  default = "t2.micro"
+  default = "t2.small"
 }
 
 variable "julia_instance_type" {
@@ -20,6 +20,11 @@ variable "julia_instance_type" {
 variable "aws_region" {
   type = string
   default = "ap-southeast-2"
+}
+
+variable "aws_availability_zone" {
+  type = string
+  default = "ap-southeast-2a"
 }
 
 variable "aws_credentials" {

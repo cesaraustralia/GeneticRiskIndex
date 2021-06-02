@@ -4,8 +4,10 @@ source("observations.R")
 source("resistance.R")
 source("distance.R")
 
-ala_config(email="rafaelschouten@gmail.com")
-path <- "/home/raf/Work/cesar/risk/GeneticRiskIndex/data"
+datapath <- "~/GeneticRiskIndex/data"
+outputpath <- "~/GeneticRiskIndex/data"
+ala_email <- "rafaelschouten@gmail.com"
+ala_config(email=ala_email)
 
 # Taxa prefiltering constants
 # TODO: make this a dict to pass to prefilter_taxa() ?
@@ -34,19 +36,19 @@ habitat_taxa <- filter(remaining_taxa, Disperse.model == "Habitat")
 distance_taxa <- filter(remaining_taxa, Disperse.model == "Distance") %>%
   categorize_by_distance(path)
 
-write_csv(filtered_taxa, "filtered.csv")
-write_csv(distance_taxa, "distance")
-write_csv(habitat_taxa, "habitat.csv")
+write_csv(filtered_taxa, file.path(path, "filtered.csv"))
+write_csv(distance_taxa, file.path(path, "distance"))
+write_csv(habitat_taxa, file.path(path, "habitat.csv"))
 
 prepare_resistance_files(habitat_taxa, path)
 
 
 # Manual methods fot testing
 
-taxon <- head(taxa, 1)
-obs <- get_observations(taxon$ALA.taxon)
-filtered <- prefilter_obs(obs)
-fn <- process_obs(filtered, taxon, mask_layer, path)
-fn %>% terra::rast() %>% plot
+# taxon <- head(taxa, 1)
+# obs <- get_observations(taxon$ALA.taxon)
+# filtered <- prefilter_obs(obs)
+# fn <- process_obs(filtered, taxon, mask_layer, path)
+# fn %>% terra::rast() %>% plot
 
-find_field_values("species")
+# find_field_values("species")
