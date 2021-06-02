@@ -1,7 +1,9 @@
 using Circuitscape
 
 # Symlink taxon data folder to this directory
-symlink(joinpath(homedir(), "taxon_data"), "data")
+if !isdir("data")
+    symlink(joinpath(homedir(), "taxon_data"), "data")
+end
 
 # Run the model
 seconds_elapsed = @elapsed compute("circuitscape_model.ini")
