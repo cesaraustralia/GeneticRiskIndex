@@ -4,22 +4,30 @@ provider "aws" {
   shared_credentials_file = var.aws_credentials
 }
 
+data "aws_ami" "julia" {
+  most_recent = true
+  filter {
+    name   = "tag:Name"
+    values = ["${var.project}-julia-ami"]
+  }
+}
+
 # Load all taxa that need circuitscape, from csv 
 locals {
   taxa = csvdecode(file(var.resistance_taxa_csv))
 }
 
 # Define a task for each taxon that will run 
-# a separate server with julia/circuitscape
+# a separate container, with julia/circuitscape pre-installed
 resource "aws_ecs_task_definition" "julia-task" {
   for_each = {for taxon in local.taxa: taxon.taxon_id => taxon}
   family = "julia-task"
   container_definitions = jsonencode([
     {
       # Name the containe
-      name      = "${var.project}-julia-id-${each.key}"
+      name      = "${var.project}-julia-${each.key}"
       # Use the julia-ami image made in the setup project
-      image     = "julia-ami"
+      image     = data.aws_ami.julia.id
       cpu       = var.julia_cpus
       memory    = var.julia_instance_memory
       requires_compatibilities = "FARGATE"
@@ -33,21 +41,15 @@ resource "aws_ecs_task_definition" "julia-task" {
     }
   ])
 
-  # Add a shared volume to access pre-calculated data
-  volume {
-    name      = "efs-storage"
-    host_path = "/ecs/efs-storage"
-  }
-
-  # Run in our region for fast data transfer
   placement_constraints {
     type       = "memberOf"
     expression = "attribute:ecs.availability-zone in [${var.aws_region}]"
   }
 
-  # Make a link to the folder of the taxon we are modelling in this task
+  # Run Circuitscape.jl model
   provisioner "local-exec" {
-    command = "link -s /etc/efs-storage/taxon/${each.key} ~/taxon_data"
+    command = "julia --project=~/GeneticRiskIndex/julia ~/GeneticRiskIndex/julia/circuitscape.jl"
   }
 
 }
+
