@@ -4,7 +4,7 @@
 
 variable "project" {
   type = string
-  default = "victoria-genetic-risk-index" 
+  default = "genetic-risk-index" 
 }
 
 variable "r_instance_type" {
@@ -39,6 +39,11 @@ variable "private_key" {
 variable "public_key" {
   type = string
   default = "../key.pem.pub"
+}
+
+variable "public_key_openssh" {
+  type = string
+  default = "../key.openssh.pub"
 }
 
 # AMI names to match locations
