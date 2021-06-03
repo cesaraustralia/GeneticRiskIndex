@@ -3,7 +3,7 @@
 
 taxon_path <- function(taxon, path) {
   underscored <- gsub(" ", "_", taxon$delwp_taxon)[[1]]
-  path <- file.path(path, "taxa", underscored)
+  path <- file.path(path, underscored)
   dir.create(path, recursive = TRUE)
   return(path)
 }
@@ -26,13 +26,16 @@ download_hdm <- function(taxon, path) {
   taxon_escaped <- gsub(" ", "%20", taxon$delwp_taxon)[[1]]
   common_name <- gsub(" ", "%20", taxon$delwp_common_name)[[1]]
   url <- paste0("https://maps2.biodiversity.vic.gov.au/Models/SMP_", taxon_escaped, "_", common_name, "_", taxon_id, ".zip")
-  dir <- taxon_path(taxon, path)
-  zipname <- file.path(dir, "hdm.zip")
-  download.file(url, zipname)
-  unzip(zipname, exdir=dir)
-  tif <- Sys.glob(file.path(dir, "*.tif"))[1]
-  habitat_tif <- file.path(dir, HABITAT_RASTER)
+  taxon_dir <- taxon_path(taxon, path)
+  download_dir <- file.path(taxon_dir, "download")
+  dir.create(download_dir, recursive = TRUE)
+  zippath <- file.path(download_dir, "hdm.zip")
+  download.file(url, zippath)
+  unzip(zippath, exdir=download_dir)
+  tif <- Sys.glob(file.path(download_dir, "*.tif"))[1]
+  habitat_tif <- file.path(taxon_dir, HABITAT_RASTER)
   file.rename(tif, habitat_tif)
+  file.remove(zippath)
   habitat_tif
 }
 

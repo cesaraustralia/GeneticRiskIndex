@@ -5,6 +5,7 @@ source("resistance.R")
 source("distance.R")
 
 datapath <- "../../data"
+rasterpath <- file.path(datapath, "raster")
 ala_email <- "rafaelschouten@gmail.com"
 ala_config(email=ala_email)
 
@@ -14,7 +15,7 @@ MAXCOUNT <- 10000
 MINCOUNT <- 50
 MINPROPINSTATE <- 0.1
 HABITAT_RASTER <- "habitat.asc"
-HABITAT_RASTER_PATH <- file.path(datapath, HABITAT_RASTER)
+HABITAT_RASTER_PATH <- file.path(rasterpath, HABITAT_RASTER)
 
 # Observation prefiltering constants
 STATE <- "Victoria"
@@ -31,7 +32,7 @@ categorized_taxa <- precategorize_risk(taxa)
 
 # Split data with local queries
 filtered_taxa <- filter(categorized_taxa, risk != "unknown")
-remaining_taxa <- filter(categorized_taxa, risk == "unknown")# %>%
+remaining_taxa <- filter(categorized_taxa, risk == "unknown")
 
 # Add clustering
 clustered_taxa <- cluster_taxa(remaining_taxa, mask_layer, path)
@@ -41,17 +42,22 @@ assesible_taxa <- filter(clustered_taxa, assess == "ALA", taxon_level == "Base")
 unassessed_taxa <- filter(clustered_taxa, assess != "ALA", taxon_level != "Base")
 
 # Split assessable into Habitat and Distance groups
-habitat_taxa <- filter(clustered_taxa, disperse_model == "Habitat")
-distance_taxa <- filter(clustered_taxa, disperse_model == "Distance")
+habitat_taxa <- filter(assesible_taxa, disperse_model == "Habitat")
+distance_taxa <- filter(assesible_taxa, disperse_model == "Distance")
 
-# Save split taxa to separate csvs
-write_csv(filtered_taxa, file.path(datapath, "filtered.csv"))
-write_csv(unnassessed_taxa, file.path(datapath, "unnaccessed_taxa.csv"))
-write_csv(distance_taxa, file.path(datapath, "distance.csv"))
-write_csv(habitat_taxa, file.path(datapath, "habitat.csv"))
+# Save processed taxa to separate csvs
+outputpath <- file.path(datapath, "csv")
+dir.create(outputpath, recursive = TRUE)
+
+write_csv(filtered_taxa, file.path(outputpath, "filtered.csv"))
+if (nrow(unassessed_taxa) > 0) {
+  write_csv(unnassessed_taxa, file.path(outputpath, "unnaccessed_taxa.csv"))
+}
+write_csv(distance_taxa, file.path(outputpath, "distance.csv"))
+write_csv(habitat_taxa, file.path(outputpath, "habitat.csv"))
 
 # Download and write raster files for resistance models
-prepare_resistance_files(habitat_taxa, datapath)
+prepare_resistance_files(habitat_taxa, rasterpath)
 
 # Manual methods fot testing
 
