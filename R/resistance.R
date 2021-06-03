@@ -9,9 +9,7 @@ taxon_path <- function(taxon, path) {
 }
 
 prepare_resistance_files <- function(taxa, path) {
-  print("Do: prepare_resistance_files")
   for (taxon_id in taxa$taxon_concept_id) {
-    print(taxon_id)
     taxon <- filter(taxa, taxon_concept_id == taxon_id)
     if (taxon$resist_model_type[[1]] == "Species") {
       download_hdm(taxon, path)
