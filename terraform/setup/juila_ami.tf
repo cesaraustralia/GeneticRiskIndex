@@ -22,6 +22,7 @@ resource "aws_instance" "julia-ami-template" {
   # Mount the shared EFS hard drive using nfs.
   # EFS is not as easy to mount as EBS, but allows 
   # connecting many instances to the same drive later.
+  # TODO make this into an ansible playbook
   provisioner "remote-exec" {
     inline = [
       "sudo apt-get -y install nfs-common ",
@@ -31,8 +32,12 @@ resource "aws_instance" "julia-ami-template" {
       "cd efs-utils",
       "./build-deb.sh",
       "sudo apt-get -y install ./build/amazon-efs-utils*deb",
-      # "sudo mount -t efs -o tls ${var.file_system_id} /mnt/efs"
-      "echo '${aws_efs_file_system.efs-storage.id}:/ /mnt/efs efs vers=4.1,rw,tls,_netdev,relatime,acl,nofail 0 0' | sudo tee -a /etc/fstab"
+      "cd ~/",
+      "sudo rm -R efs-utils",
+      "mkdir data",
+      "sudo mount -t efs -o tls ${aws_efs_file_system.efs-storage.id} data",
+      "sudo chown -R ubuntu data",
+      "echo '${aws_efs_file_system.efs-storage.id}:/ /home/ubuntu/data/ efs uid=1000,vers=4.1,rw,tls,_netdev,relatime,acl,nofail 0 0' | sudo tee -a /etc/fstab"
     ]
   }
 
