@@ -18,16 +18,17 @@ get_observations <- function(taxon_name) {
 # Manipulating observation data ######################################################
 
 cluster_taxa <- function(taxa, mask_layer, path) {
-  for (taxonid in taxa$Taxon.Id) {
-    cluster_taxon(taxa, taxonid, mask_layer, path)
+  for (taxon_id in taxa$taxon_id) {
+    cluster_taxon(taxa, taxon_id, mask_layer, path)
   }
+  return(taxa)
 }
 
 # Retrieve observations, filter and process for a single taxon
-cluster_taxon <- function(taxa, taxonid, mask_layer, path) {
-  print(paste0("Taxon ID: ", taxonid))
-  taxon <- filter(taxa, Taxon.Id == taxonid)
-  get_observations(taxon$ALA.taxon) %>% 
+cluster_taxon <- function(taxa, taxon_id, mask_layer, path) {
+  print(paste0("Taxon ID: ", taxon_id))
+  taxon <- filter(taxa, taxon_id == taxonid)
+  get_observations(taxon$ala_search_term) %>% 
     prefilter_obs() %>%
     process_obs(taxon, mask_layer, path)
 }
