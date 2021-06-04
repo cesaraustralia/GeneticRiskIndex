@@ -1,64 +1,18 @@
 ---
 cran_packages:
-  # tidyverse packages:
-  # broom, DBI, dplyr, forcats, ggplot2, haven, httr, hms, jsonlite, lubridate, magrittr,
-  # modelr, purrr, readr, readxl, stringr, tibble, rvest, tidyr, xml2
-  - tidyverse
-  # ggplot2
-  # - gridExtra
-  # - ggrepel
-  # - ggfortify
-  # opencpu packages
-  # - curl
-  # - jsonlite
-  # - V8
-  # - magick
-  # Rmarkdown
-  # - rmarkdown
-  # - knitr
-  # - formatR
-  # - roxygen2
-  # - flexdashboard
-  # Package Development
-  # - testthat
-  # - devtools
-  # - profvis
-  # - vdiffr
-  # Rcpp
-  # - Rcpp
-  # - RcppRoll
-  # - RcppEigen
-  # GIS
-  # - leaflet
-  # - DiagrammeR
+  - fasterize
   - fpc
-  # - sp
+  - galah
   - sf
-  # - rgeos
-  - rgdal
-  # - maptools
-  # Shiny
-  # - rstudioapi
-  # - shiny
-  # - shinydashboard
-  # misc
-  # - animation
-  # - forecast
-  # - foreach
-  # - feather
+  - terra
+  - tidyverse
 
 shared_libraries:
   - libcurl4-gnutls-dev
-  - libssh2-1-dev
+  - libgdal-dev
+  - libgeos-dev
   - libgit2-dev
   - libicu-dev
-  # - libxml2-dev
-  # - libgeos-dev
   - libproj-dev
-  - libgdal-dev
-  # - libv8-dev
-  # - libprotobuf-dev
-  # - protobuf-compiler
-
-#github_packages:
-
+  - libssh2-1-dev
+  - libudunits2-dev
