@@ -22,10 +22,11 @@ cluster_observations <- function(taxa, mask_layer, path) {
     print(paste0("Taxon ID: ", taxon_id))
     taxon <- filter(taxa, vic_taxon_id == taxon_id)
     obs <- cluster_taxon_obs(taxon, mask_layer, path)
-    obs_csv_path <- file.path(path, "observations.csv")
+    taxonpath <- taxon_path(taxon, path)
+    obs_csv_path <- file.path(taxonpath, "observations.csv")
     print(paste0("  Writing ", obs_csv_path))
     write_csv(obs, obs_csv_path)
-    write_rasters(obs, taxon, mask_layer, path)
+    write_rasters(obs, taxon, mask_layer, taxonpath)
   }
 }
 
@@ -101,7 +102,7 @@ geom_to_raster <- function(geom, type, taxon, mask_layer, path) {
   obs_raster <- mask_layer
   obs_raster[cell_obs] <- 1
   # write it to disk
-  filename = file.path(taxon_path(taxon, path), paste0(type, ".tif"))
+  filename = file.path(path, paste0(type, ".tif"))
   print(paste0("  Writing ", filename))
   terra::writeRaster(obs_raster, filename, overwrite=TRUE)
   return(filename)

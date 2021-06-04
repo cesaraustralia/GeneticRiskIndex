@@ -30,14 +30,17 @@ download_hdm <- function(taxon, path) {
   zippath <- file.path(download_dir, "hdm.zip")
   download.file(url, zippath)
   unzip(zippath, exdir=download_dir)
-  tif <- Sys.glob(file.path(download_dir, "*.tif"))[1]
-  habitat_tif <- file.path(taxon_dir, HABITAT_RASTER)
-  file.rename(tif, habitat_tif)
   file.remove(zippath)
-  habitat_tif
+  habitat_tif <- Sys.glob(file.path(download_dir, "*.tif"))[1]
+  resistance_tif <- file.path(taxon_dir, RESISTANCE_RASTER)
+  habitat_to_resistance(habitat_tif, resistance_tif)
+}
+
+habitat_to_resistance <- function(habitat_path, resistance_path) {
+  terra::writeRaster(100 - terra::rast(habitat_path), resistance_path)
 }
 
 link_generic_hdm <- function(taxon, path) {
-  dest <- file.path(taxon_path(taxon, path), HABITAT_RASTER)
-  file.symlink(HABITAT_RASTER_PATH, dest)
+  dest <- file.path(taxon_path(taxon, path), RESISTANCE_RASTER)
+  file.symlink(RESISTANCE_RASTER_PATH, dest)
 }
