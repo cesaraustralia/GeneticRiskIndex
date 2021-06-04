@@ -17,28 +17,33 @@ get_observations <- function(taxon_name) {
 
 # Manipulating observation data ######################################################
 
-cluster_taxa <- function(taxa, mask_layer, path) {
-  for (taxon_id in taxa$taxon_id) {
-    cluster_taxon(taxa, taxon_id, mask_layer, path)
+cluster_observations <- function(taxa, mask_layer, path) {
+  for (taxon_id in taxa$vic_taxon_id) {
+    print(paste0("Taxon ID: ", taxon_id))
+    taxon <- filter(taxa, vic_taxon_id == taxon_id)
+    obs <- cluster_taxon_obs(taxon, mask_layer, path)
+    obs_csv_path <- file.path(path, "observations.csv")
+    print(paste0("  Writing ", obs_csv_path))
+    write_csv(obs, obs_csv_path)
+    write_rasters(obs, taxon, mask_layer, path)
   }
-  return(taxa)
 }
 
 # Retrieve observations, filter and process for a single taxon
-cluster_taxon <- function(taxa, taxon_id, mask_layer, path) {
-  print(paste0("Taxon ID: ", taxon_id))
-  taxon <- filter(taxa, taxon_id == taxonid)
-  get_observations(taxon$ala_search_term) %>% 
+cluster_taxon_obs <- function(taxon, mask_layer, path) {
+  obs <- get_observations(taxon$ala_search_term) %>% 
     prefilter_obs() %>%
-    process_obs(taxon, mask_layer, path)
+    add_euclidan_coords() %>%
+    add_clusters(taxon$epsilon)
+  print(paste0("  num observations: ", nrow(obs)))
+  return(obs)
 }
-
 
 # Prefilter observations data #####
 
 prefilter_obs <- function(obs) {
   obs %>% remove_missing_coords() %>%
-          remove_location_duplicates()
+    remove_location_duplicates()
 }
 
 remove_missing_coords <- function(obs) {
@@ -51,23 +56,9 @@ remove_location_duplicates <- function(obs) {
     distinct(decimalLatitude, decimalLongitude, .keep_all = TRUE)
 }
 
-
-# Processs observations to generate raster files with clustering #####
-
-process_obs <- function(obs, taxon, mask_layer, path) {
-  print(paste0("  num observations: ", nrow(obs)))
-  eps <- taxon$epsilon
-  obs %>% add_euclidan_coords() %>% 
-          add_clusters(eps) %>%
-          write_rasters(taxon, eps, mask_layer, path)
-}
-
 # Add transformed coordinates "x" an "y" for accurate distance calculations
 add_euclidan_coords <- function(obs) {
-    sf::st_as_sf(obs, coords = c("decimalLongitude", "decimalLatitude"), crs = LATLON_EPSG) %>% 
-    sf::st_transform(crs = METRIC_EPSG) %>% 
-    mutate(x = sf::st_coordinates(.)[,1],
-           y = sf::st_coordinates(.)[,2]) %>% 
+    sf::st_as_sf(obs, coords = c("decimalLongitude", "decimalLatitude"), crs = LATLON_EPSG) %>% sf::st_transform(crs = METRIC_EPSG) %>% mutate(x = sf::st_coordinates(.)[,1], y = sf::st_coordinates(.)[,2]) %>% 
     sf::st_drop_geometry()
 }
 
@@ -93,10 +84,10 @@ buffer_orphans <- function(geoms, eps) {
 }
 
 # Write the clustered and orphan observations to raster files
-write_rasters <- function(obs, taxon, eps, mask_layer, path) {
+write_rasters <- function(obs, taxon, mask_layer, path) {
   geoms <- sf::st_as_sf(obs, coords = c("x", "y"), crs = METRIC_EPSG)
-  clustered <- buffer_clustered(geoms, eps)
-  orphans <- buffer_orphans(geoms, eps)
+  clustered <- buffer_clustered(geoms, taxon$eps)
+  orphans <- buffer_orphans(geoms, taxon$eps)
   geom_to_raster(orphans, "orphans", taxon, mask_layer, path)
   geom_to_raster(clustered, "clusters", taxon, mask_layer, path)
 }
@@ -110,8 +101,8 @@ geom_to_raster <- function(geom, type, taxon, mask_layer, path) {
   obs_raster <- mask_layer
   obs_raster[cell_obs] <- 1
   # write it to disk
-  filename = file.path(taxon_path(taxon, path), paste0(type, ".asc"))
-  print(paste0("Writing ", filename))
-  terra::writeRaster(obs_raster, filename, overwrite=true)
+  filename = file.path(taxon_path(taxon, path), paste0(type, ".tif"))
+  print(paste0("  Writing ", filename))
+  terra::writeRaster(obs_raster, filename, overwrite=TRUE)
   return(filename)
 }

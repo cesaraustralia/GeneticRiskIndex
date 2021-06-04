@@ -50,3 +50,8 @@ resource "aws_ami_from_instance" "r-ami" {
   depends_on = [aws_instance.r-ami-template]
   source_instance_id = aws_instance.r-ami-template.id
 }
+
+output "r-ip" {
+  description = "The ip of the template R instance"
+  value       = aws_instance.r-ami-template.public_ip
+}
