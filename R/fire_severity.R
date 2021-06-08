@@ -19,7 +19,8 @@ filter_by_fire_severity <- function(obs, taxon) {
 
   # Create SpatialPoints objects from lists of geographic points,
   # telling R to use lat-long coordinates projection (4326):
-  sf_locs <- sf::st_as_sf(locs, coords = c("decimalLongitude", "decimalLatitude"), crs = 4326)# transform SpatialPoints objects to same projection as raster layer:
+  sf_locs <- sf::st_as_sf(locs, coords = c("decimalLongitude", "decimalLatitude"), crs = 4326)
+  # transform SpatialPoints objects to same projection as raster layer:
   points <- sf::st_transform(sf_locs, crs = terra::crs(severity_rast, proj4 = TRUE))
 
   # Extract raster layer values to new lists:
