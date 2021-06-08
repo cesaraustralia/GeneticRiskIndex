@@ -4,7 +4,7 @@
 
 variable "project" {
   type = string
-  default = "unnamed"
+  default = "genetic-risk-index"
 }
 
 variable "julia_cpus" {
@@ -28,5 +28,5 @@ variable "aws_credentials" {
 
 variable "resistance_taxa_csv" {
   type = string
-  default = "../../data/resistance_taxa.csv"
+  default = "resistance.csv"
 }

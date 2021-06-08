@@ -6,8 +6,9 @@ provider "aws" {
 
 data "aws_ami" "julia" {
   most_recent = true
+  owners = ["self"]
   filter {
-    name   = "tag:Name"
+    name   = "name"
     values = ["${var.project}-julia-ami"]
   }
 }
@@ -20,7 +21,7 @@ locals {
 # Define a task for each taxon that will run 
 # a separate container, with julia/circuitscape pre-installed
 resource "aws_ecs_task_definition" "julia-task" {
-  for_each = {for taxon in local.taxa: taxon.taxon_id => taxon}
+  for_each = {for taxon in local.taxa : replace(taxon.delwp_taxon, " ", "_") => taxon}
   family = "julia-task"
   container_definitions = jsonencode([
     {

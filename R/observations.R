@@ -14,35 +14,20 @@ get_observations <- function(taxon_name) {
   return(obs)
 }
 
-
 # Manipulating observation data ######################################################
 
-cluster_observations <- function(taxa, mask_layer, path) {
-  for (taxon_id in taxa$vic_taxon_id) {
-    print(paste0("Taxon ID: ", taxon_id))
-    taxon <- filter(taxa, vic_taxon_id == taxon_id)
-    obs <- cluster_taxon_obs(taxon, mask_layer, path)
-    taxonpath <- taxon_path(taxon, path)
-    obs_csv_path <- file.path(taxonpath, "observations.csv")
-    print(paste0("  Writing ", obs_csv_path))
-    write_csv(obs, obs_csv_path)
-    write_rasters(obs, taxon, mask_layer, taxonpath)
-  }
-}
-
-# Retrieve observations, filter and process for a single taxon
-cluster_taxon_obs <- function(taxon, mask_layer, path) {
-  obs <- get_observations(taxon$ala_search_term) %>% 
-    prefilter_obs() %>%
-    add_euclidan_coords() %>%
-    add_clusters(taxon$epsilon)
-  print(paste0("  num observations: ", nrow(obs)))
-  return(obs)
-}
-
 # Prefilter observations data #####
+filter_observations <- function(obs, taxon) {
+    filtered_obs <- obs %>%
+      remove_bad_obs() %>%
+      filter_by_fire_severity(taxon)
+    print(paste0("  filtered observations: ", nrow(filtered_obs)))
+    clustered_obs <- filtered_obs %>%
+      add_euclidan_coords() %>%
+      add_clusters(taxon$epsilon)
+}
 
-prefilter_obs <- function(obs) {
+remove_bad_obs <- function(obs) {
   obs %>% remove_missing_coords() %>%
     remove_location_duplicates()
 }
@@ -82,6 +67,19 @@ buffer_orphans <- function(geoms, eps) {
   dplyr::filter(geoms, clusters == 0) %>% 
     st_buffer(dist = eps * 1000) %>% 
     st_union()
+}
+
+
+# Writing observation data ######################################################
+
+# Write clustered data
+write_clustered_obs <- function(obs, taxon, path) {
+    # Write csv and raster files for observations and clusters
+    taxonpath <- taxon_path(taxon, path)
+    obs_csv_path <- file.path(taxonpath, "observations.csv")
+    print(paste0("  Writing ", obs_csv_path))
+    write_csv(obs, obs_csv_path)
+    write_rasters(obs, taxon, mask_layer, taxonpath)
 }
 
 # Write the clustered and orphan observations to raster files

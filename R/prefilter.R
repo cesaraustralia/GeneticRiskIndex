@@ -2,12 +2,20 @@
 
 # Categorizes risk where distance/resistance are not needed
 precategorize_risk <- function(taxa) {
+    n <- nrow(taxa)
+    r <- rep(1:ceiling(n/GALAH_MAXROWS), each=GALAH_MAXROWS)[1:n]
+    s <- lapply(split(taxa, r), precategorize_block)
+    # Split apply combine chunks
+    do.call(rbind, s)
+}
+
+precategorize_block <- function(taxa) {
    taxa %>% add_count_cols() %>%
-            add_risk_col() %>%
-            label_high_count() %>%
-            label_low_count() # %>%
-            # label_low_regional_relevance() %>%
-            # label_data_deficient()
+     add_risk_col() %>%
+     label_high_count() %>%
+     label_low_count() # %>%
+     # label_low_regional_relevance() %>%
+     # label_data_deficient()
 }
 
 # Label very common species
@@ -43,8 +51,8 @@ add_risk_col <- function(taxa) {
 add_count_cols <- function(taxa) {
   state_counts <- get_state_counts(taxa) %>% rename(state_count = count, ala_search_term = species)
   all_counts <- get_all_counts(taxa) %>% rename(ala_search_term = species)
-  taxa <- merge(taxa, state_counts, by = "ala_search_term")
-  taxa <- merge(taxa, all_counts, by = "ala_search_term")
+  taxa <- merge(taxa, state_counts, by = "ala_search_term", all.x=TRUE)
+  taxa <- merge(taxa, all_counts, by = "ala_search_term", all.x=TRUE)
   return(taxa)
 }
 

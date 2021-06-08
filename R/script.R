@@ -3,6 +3,7 @@ source("prefilter.R")
 source("observations.R")
 source("resistance.R")
 source("distance.R")
+source("fire_severity.R")
 
 datapath <- "../../data"
 taxapath <- "../../data/taxa"
@@ -17,6 +18,7 @@ MINCOUNT <- 50
 MINPROPINSTATE <- 0.1
 RESISTANCE_RASTER <- "resistance.tif"
 RESISTANCE_RASTER_PATH <- file.path(datapath, RESISTANCE_RASTER)
+FIRE_SEVERITY_RASTER_PATH <- file.path(datapath, "fire_severity.tif")
 
 # Observation prefiltering constants
 STATE <- "Victoria"
@@ -35,7 +37,7 @@ categorized_taxa <- precategorize_risk(taxa)
 filtered_taxa <- filter(categorized_taxa, risk != "unknown")
 remaining_taxa <- filter(categorized_taxa, risk == "unknown")
 
-# Filter if can assess currently
+# Filter if we can assess currently
 assesible_taxa <- filter(remaining_taxa, assess == "ALA", taxon_level == "Base")
 unassessed_taxa <- filter(remaining_taxa, assess != "ALA", taxon_level != "Base")
 
@@ -51,16 +53,29 @@ write_csv(distance_taxa, file.path(datapath, "distance.csv"))
 write_csv(resistance_taxa, file.path(datapath, "resistance"))
 
 # Get observation data, cluster, and write to csv and raster
-cluster_observations(remaining_taxa, mask_layer, taxapath)
+# Keeping this in the main script as it is important to verify
+# the steps we are using
+process_observations <- function(taxa, mask_layer, path) {
+  for (taxon_id in taxa$vic_taxon_id) {
+    print(paste0("Taxon ID: ", taxon_id))
+    taxon <- filter(taxa, vic_taxon_id == taxon_id)
+    obs <- get_observations(taxon$ala_search_term) %>%
+      filter_observations(taxon)
+    print(paste0("  num observations: ", nrow(obs)))
+    write_clustered_obs(obs, taxon, path)
+  }
+}
+
+process_observations(remaining_taxa, mask_layer, taxapath)
 
 # Download and write raster files for resistance models
 prepare_resistance_files(resistance_taxa, taxapath)
 
 # Manual methods fot testing
-
 # taxon <- head(taxa, 1)
-# obs <- get_observations(taxon$ALA.taxon)
-# filtered <- prefilter_obs(obs)
+# obs <- get_observations(taxon$ala_search_term)
+# filtered <- filter_observations(obs, taxon)
+
 # fn <- process_obs(filtered, taxon, mask_layer, path)
 # fn %>% terra::rast() %>% plot
 
