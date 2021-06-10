@@ -34,15 +34,13 @@ load_or_dowload_obs <- function(taxon, path, force_download=FALSE) {
 # Keeping this in the main script as it is important to verify
 # the steps we are using
 process_observations <- function(taxa, mask_layer, path, force_download=FALSE) {
-  for (row in 1:nrow(taxa)) {
-    taxon <- taxa[row, ]
-    process_observations <- function(taxon, mask_layer, path, force_download=FALSE) {
-      print(paste0("Taxon: ", taxon$ala_search_term))
-      load_or_dowload_obs(taxon, taxapath, force_download) %>%
-        filter_observations(taxon)
-      print(paste0("  num observations: ", nrow(obs)))
-      write_clustered_obs(obs, taxon, path)
-    }
+  for (ala_search_term in taxa$ala_search_term) {
+    taxon <- filter(taxa, ala_search_term == ala_search_term)
+    print(paste0("Taxon: ", taxon$ala_search_term))
+    obs <- load_or_dowload_obs(taxon, taxapath, force_download) %>%
+      filter_observations(taxon)
+    print(paste0("  num observations: ", nrow(obs)))
+    write_clustered_obs(obs, taxon, path)
   }
 }
 
@@ -57,6 +55,7 @@ filter_observations <- function(obs, taxon) {
     clustered_obs <- filtered_obs %>%
       add_euclidan_coords() %>%
       add_clusters(taxon$epsilon)
+    return(clustered_obs)
 }
 
 remove_bad_obs <- function(obs) {
@@ -85,6 +84,7 @@ add_euclidan_coords <- function(obs) {
 # Scan clusters and add cluster index to observations
 add_clusters <- function(obs, eps) {
   clusters <- fpc::dbscan(obs[, c("x", "y")], eps = eps * 1000, MinPts = 3)
+  print(paste0("Clusters: ", nrow(clusters)))
   out <- mutate(obs, clusters = clusters$cluster)
   return(out)
 }
