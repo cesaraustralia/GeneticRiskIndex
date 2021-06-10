@@ -6,7 +6,7 @@ source("distance.R")
 source("fire_severity.R")
 
 datapath <- file.path(path_home(), "data")
-taxapath <- file.path(datapath, "data/taxa")
+taxapath <- file.path(datapath, "taxa")
 dir.create(taxapath)
 ala_email <- "rafaelschouten@gmail.com"
 ala_config(email=ala_email)
@@ -52,7 +52,7 @@ if (nrow(unassessed_taxa) > 0) {
 write_csv(distance_taxa, file.path(datapath, "distance.csv"))
 write_csv(resistance_taxa, file.path(datapath, "resistance"))
 
-process_observations(remaining_taxa, mask_layer, taxapath)
+process_observations(head(remaining_taxa, 1), mask_layer, taxapath)
 
 # Download and write raster files for resistance models
 prepare_resistance_files(resistance_taxa, taxapath)
