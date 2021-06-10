@@ -5,8 +5,8 @@ source("resistance.R")
 source("distance.R")
 source("fire_severity.R")
 
-datapath <- "../../data"
-taxapath <- "../../data/taxa"
+datapath <- file.path(path_home(), "data")
+taxapath <- file.path(datapath, "data/taxa")
 dir.create(taxapath)
 ala_email <- "rafaelschouten@gmail.com"
 ala_config(email=ala_email)
@@ -51,20 +51,6 @@ if (nrow(unassessed_taxa) > 0) {
 }
 write_csv(distance_taxa, file.path(datapath, "distance.csv"))
 write_csv(resistance_taxa, file.path(datapath, "resistance"))
-
-# Get observation data, cluster, and write to csv and raster
-# Keeping this in the main script as it is important to verify
-# the steps we are using
-process_observations <- function(taxa, mask_layer, path) {
-  for (taxon_id in taxa$vic_taxon_id) {
-    print(paste0("Taxon ID: ", taxon_id))
-    taxon <- filter(taxa, vic_taxon_id == taxon_id)
-    obs <- get_observations(taxon$ala_search_term) %>%
-      filter_observations(taxon)
-    print(paste0("  num observations: ", nrow(obs)))
-    write_clustered_obs(obs, taxon, path)
-  }
-}
 
 process_observations(remaining_taxa, mask_layer, taxapath)
 

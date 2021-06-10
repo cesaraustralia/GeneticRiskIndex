@@ -1,13 +1,7 @@
 
 # "https://maps2.biodiversity.vic.gov.au/Models/SMP_Dromaius%20novaehollandiae_Emu_10001.zip"
 
-taxon_path <- function(taxon, path) {
-  underscored <- gsub(" ", "_", taxon$delwp_taxon)[[1]]
-  path <- file.path(path, underscored)
-  dir.create(path, recursive = TRUE)
-  return(path)
-}
-
+# Set up files for use by Circuitscape.jl later on
 prepare_resistance_files <- function(taxa, path) {
   for (taxon_id in taxa$taxon_concept_id) {
     taxon <- filter(taxa, taxon_concept_id == taxon_id)
@@ -19,6 +13,7 @@ prepare_resistance_files <- function(taxa, path) {
   }
 }
 
+# Download the HDM layer for this taxon
 download_hdm <- function(taxon, path) {
   taxon_id <- taxon$vic_taxon_id[[1]]
   taxon_escaped <- gsub(" ", "%20", taxon$delwp_taxon)[[1]]
@@ -36,10 +31,13 @@ download_hdm <- function(taxon, path) {
   habitat_to_resistance(habitat_tif, resistance_tif)
 }
 
+# Invert percentage from % habitat quality to % movement resistance
 habitat_to_resistance <- function(habitat_path, resistance_path) {
-  terra::writeRaster(100 - terra::rast(habitat_path), resistance_path)
+  terra::writeRaster(100 - terra::rast(habitat_path), resistance_path, overwrite=TRUE)
 }
 
+# Make a symlink to the generic hdm file instead of
+# Downloading a specific file
 link_generic_hdm <- function(taxon, path) {
   dest <- file.path(taxon_path(taxon, path), RESISTANCE_RASTER)
   file.symlink(RESISTANCE_RASTER_PATH, dest)

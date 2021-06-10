@@ -1,17 +1,49 @@
 # Retrieving observation data from ALA ######################################################
 
 # Get taxon observations from ALA using `galah`
-get_observations <- function(taxon_name) {
-  print(paste0("  Retrieving observations from ALA for ", taxon_name))
+get_observations <- function(taxon) {
+  ala_search_term <- taxon$ala_search_term
+  print(paste0("  Retrieving observations from ALA for ", ala_search_term))
   obs <- ala_occurrences(
-    taxa = select_taxa(taxon_name),
+    taxa = select_taxa(ala_search_term),
     filters = select_filters(
+      # Limit observations by year, basis and state
       year = TIMESPAN,
       basis_of_record = BASIS,
       stateProvince = STATE
-    ),
+    )
   )
   return(obs)
+}
+
+# Download or load cached observation data
+load_or_dowload_obs <- function(taxon, path, force_download=FALSE) {
+  obs_csv_path <- file.path(taxon_path(taxon, path), "observations.csv")
+  if (!force_download && file.exists(obs_csv_path)) {
+    obs <- read.csv(obs_csv_path, header = TRUE)
+    return(obs)
+  } else {
+    obs <- get_observations(taxon)
+    print(paste0("  Writing ", obs_csv_path))
+    write_csv(obs, obs_csv_path)
+    return(obs)
+  }
+}
+
+# Get observation data, cluster, and write to csv and raster
+# Keeping this in the main script as it is important to verify
+# the steps we are using
+process_observations <- function(taxa, mask_layer, path, force_download=FALSE) {
+  for (row in 1:nrow(taxa)) {
+    taxon <- taxa[row, ]
+    process_observations <- function(taxon, mask_layer, path, force_download=FALSE) {
+      print(paste0("Taxon: ", taxon$ala_search_term))
+      load_or_dowload_obs(taxon, taxapath, force_download) %>%
+        filter_observations(taxon)
+      print(paste0("  num observations: ", nrow(obs)))
+      write_clustered_obs(obs, taxon, path)
+    }
+  }
 }
 
 # Manipulating observation data ######################################################
@@ -44,8 +76,10 @@ remove_location_duplicates <- function(obs) {
 
 # Add transformed coordinates "x" an "y" for accurate distance calculations
 add_euclidan_coords <- function(obs) {
-    sf::st_as_sf(obs, coords = c("decimalLongitude", "decimalLatitude"), crs = LATLON_EPSG) %>% sf::st_transform(crs = METRIC_EPSG) %>% mutate(x = sf::st_coordinates(.)[,1], y = sf::st_coordinates(.)[,2]) %>% 
-    sf::st_drop_geometry()
+    sf::st_as_sf(obs, coords = c("decimalLongitude", "decimalLatitude"), crs = LATLON_EPSG) %>% 
+        sf::st_transform(crs = METRIC_EPSG) %>% 
+        mutate(x = sf::st_coordinates(.)[,1], y = sf::st_coordinates(.)[,2]) %>% 
+        sf::st_drop_geometry()
 }
 
 # Scan clusters and add cluster index to observations
@@ -76,9 +110,6 @@ buffer_orphans <- function(geoms, eps) {
 write_clustered_obs <- function(obs, taxon, path) {
     # Write csv and raster files for observations and clusters
     taxonpath <- taxon_path(taxon, path)
-    obs_csv_path <- file.path(taxonpath, "observations.csv")
-    print(paste0("  Writing ", obs_csv_path))
-    write_csv(obs, obs_csv_path)
     write_rasters(obs, taxon, mask_layer, taxonpath)
 }
 
@@ -87,7 +118,7 @@ write_rasters <- function(obs, taxon, mask_layer, path) {
   geoms <- sf::st_as_sf(obs, coords = c("x", "y"), crs = METRIC_EPSG)
   clustered <- buffer_clustered(geoms, taxon$eps)
   orphans <- buffer_orphans(geoms, taxon$eps)
-  geom_to_raster(orphans, "orphans", taxon, mask_layer, path)
+  geom_to_raster(orphans, "short_circuit", taxon, mask_layer, path)
   geom_to_raster(clustered, "clusters", taxon, mask_layer, path)
 }
 

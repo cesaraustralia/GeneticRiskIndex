@@ -1,5 +1,34 @@
 # Prefiltering
 
+# Retreive state counts from ALA
+get_state_counts <- function(taxa) {
+  ala_counts(
+    taxa = select_taxa(taxa$ala_search_term), 
+    filters = select_filters(
+      year = TIMESPAN,
+      basis_of_record = BASIS,
+      stateProvince = STATE
+    ),
+    group_by = "species",
+    type = "record",
+    limit = NULL
+  )
+}
+
+# Retreive national counts from ALA
+get_all_counts <- function(taxa) {
+  ala_counts(
+    taxa = select_taxa(taxa$ala_search_term), 
+    filters = select_filters(
+      year = TIMESPAN,
+      basis_of_record = BASIS
+    ),
+    group_by = "species",
+    type = "record",
+    limit = NULL
+  )
+}
+
 # Categorizes risk where distance/resistance are not needed
 precategorize_risk <- function(taxa) {
     n <- nrow(taxa)
@@ -54,33 +83,4 @@ add_count_cols <- function(taxa) {
   taxa <- merge(taxa, state_counts, by = "ala_search_term", all.x=TRUE)
   taxa <- merge(taxa, all_counts, by = "ala_search_term", all.x=TRUE)
   return(taxa)
-}
-
-# Retreive state counts from ALA
-get_state_counts <- function(taxa) {
-  ala_counts(
-    taxa = select_taxa(taxa$ala_search_term), 
-    filters = select_filters(
-      year = TIMESPAN,
-      basis_of_record = BASIS,
-      stateProvince = STATE
-    ),
-    group_by = "species",
-    type = "record",
-    limit = 5000
-  )
-}
-
-# Retreive national counts from ALA
-get_all_counts <- function(taxa) {
-  ala_counts(
-    taxa = select_taxa(taxa$ala_search_term), 
-    filters = select_filters(
-      year = TIMESPAN,
-      basis_of_record = BASIS
-    ),
-    group_by = "species",
-    type = "record",
-    limit = 5000
-  )
 }
