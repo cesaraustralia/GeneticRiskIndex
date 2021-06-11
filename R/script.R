@@ -76,7 +76,7 @@ distance_taxa <- filter(assesible_taxa, disperse_model == "Distance")
 
 write_csv(filtered_taxa, file.path(groupingspath, "filtered_taxa.csv"))
 if (nrow(unassessed_taxa) > 0) {
-  write_csv(unnassessed_taxa, file.path(groupingspath, "unnassessed_taxa.csv"))
+  write_csv(unassessed_taxa, file.path(groupingspath, "unassessed_taxa.csv"))
 }
 write_csv(distance_taxa, file.path(groupingspath, "distance.csv"))
 write_csv(resistance_taxa, file.path(groupingspath, "resistance.csv"))
