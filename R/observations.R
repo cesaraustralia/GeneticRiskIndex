@@ -5,15 +5,23 @@
 # the steps we are using
 process_observations <- function(taxa, mask_layer, taxapath, force_download=FALSE) {
   clustered_taxa <- add_column(taxa, num_clusters = 0) 
+  num_clusters <- 0
   for (i in 1:nrow(clustered_taxa)) {
     taxon <- clustered_taxa[i, ] 
     print(paste0("Taxon: ", taxon$ala_search_term))
-    obs <- load_or_dowload_obs(taxon, taxapath, force_download) %>%
-      filter_observations(taxon) %>%
-      cluster_observations(taxon)
-    clustered_taxa[i, "num_clusters"] <- max(obs$clusters) 
-    print(paste0("  num observations: ", nrow(obs)))
-    write_cluster_rasters(obs, taxon, mask_layer, taxapath)
+    num_clusters <- tryCatch({
+      obs <- load_or_dowload_obs(taxon, taxapath, force_download) %>%
+        filter_observations(taxon) %>%
+        cluster_observations(taxon)
+      print(paste0("  num observations: ", nrow(obs)))
+      write_cluster_rasters(obs, taxon, mask_layer, taxapath)
+      max(obs$clusters)
+    }, error = function(e) {
+      0
+    }, finally = {
+      clustered_taxa[i, "risk"] <- "failed"
+    })
+    clustered_taxa[i, "num_clusters"] <- num_clusters
   }
   return(clustered_taxa)
 }

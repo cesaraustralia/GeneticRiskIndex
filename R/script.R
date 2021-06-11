@@ -97,9 +97,12 @@ write_csv(resistance_taxa, file.path(groupingspath, "resistance.csv"))
 # Automated: process observations for all taxa
 clustered_taxa <- process_observations(resistance_taxa, mask_layer, taxapath)
 
-common_resistance_taxa <- filter(clustered_taxa, num_clusters >= MAX_CLUSTERS)
-rare_resistance_taxa <- filter(clustered_taxa, num_clusters < MAX_CLUSTERS)
+failed_resistance_taxa <- filter(clustered_taxa, risk == "failed")
+failed_resistance_taxa$ala_search_term
+common_resistance_taxa <- filter(clustered_taxa, num_clusters >= MAX_CLUSTERS, risk != "failed")
+rare_resistance_taxa <- filter(clustered_taxa, num_clusters < MAX_CLUSTERS, risk != "failed")
 
+write_csv(failed_resistance_taxa, file.path(groupingspath, "failed_resistance_taxa"))
 write_csv(common_resistance_taxa, file.path(groupingspath, "common_resistance_taxa.csv"))
 write_csv(rare_resistance_taxa, file.path(groupingspath, "rare_resistance_taxa.csv"))
 
