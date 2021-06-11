@@ -4,8 +4,8 @@
 # Keeping this in the main script as it is important to verify
 # the steps we are using
 process_observations <- function(taxa, mask_layer, taxapath, force_download=FALSE) {
-  for (ala_search_term in taxa$ala_search_term) {
-    taxon <- filter(taxa, ala_search_term == ala_search_term)
+  for (i in 1:nrow(taxa)) {
+    taxon <- taxa[i, ] 
     print(paste0("Taxon: ", taxon$ala_search_term))
     obs <- load_or_dowload_obs(taxon, taxapath, force_download) %>%
       filter_observations(taxon) %>%
@@ -17,10 +17,29 @@ process_observations <- function(taxa, mask_layer, taxapath, force_download=FALS
 
 # Retrieving observation data from ALA ######################################################
 
+# Download or load cached observation data
+load_or_dowload_obs <- function(taxon, taxapath, force_download=FALSE) {
+  obs_csv_path <- file.path(taxon_path(taxon, taxapath), "observations.csv")
+  if (!force_download && file.exists(obs_csv_path)) {
+    obs <- read_cached_observations(taxon, obs_csv_path)
+    return(obs)
+  } else {
+    obs <- download_observations(taxon)
+    print(paste0("  Writing ", obs_csv_path))
+    write_csv(obs, obs_csv_path)
+    return(obs)
+  }
+}
+# Get taxon observations cached locally
+read_cached_observations <- function(taxon, csv_path) {
+  print(paste0("  Loading cached observations for ", taxon$ala_search_term))
+  obs <- read.csv(csv_path, header = TRUE)
+  return(obs)
+}
+
 # Get taxon observations from ALA using `galah`
-get_observations <- function(taxon) {
-  ala_search_term <- taxon$ala_search_term
-  print(paste0("  Retrieving observations from ALA for ", ala_search_term))
+download_observations <- function(taxon) {
+  print(paste0("  Retrieving observations from ALA for ", taxon$ala_search_term))
   obs <- ala_occurrences(
     taxa = select_taxa(ala_search_term),
     filters = select_filters(
@@ -31,20 +50,6 @@ get_observations <- function(taxon) {
     )
   )
   return(obs)
-}
-
-# Download or load cached observation data
-load_or_dowload_obs <- function(taxon, path, force_download=FALSE) {
-  obs_csv_path <- file.path(taxon_path(taxon, path), "observations.csv")
-  if (!force_download && file.exists(obs_csv_path)) {
-    obs <- read.csv(obs_csv_path, header = TRUE)
-    return(obs)
-  } else {
-    obs <- get_observations(taxon)
-    print(paste0("  Writing ", obs_csv_path))
-    write_csv(obs, obs_csv_path)
-    return(obs)
-  }
 }
 
 # Manipulating observation data ######################################################
@@ -74,6 +79,7 @@ remove_location_duplicates <- function(obs) {
 }
 
 cluster_observations <- function(obs, taxon) {
+    print(taxon$ala_search_term)
     clustered_obs <- obs %>%
       add_euclidan_coords() %>%
       add_clusters(taxon$epsilon)

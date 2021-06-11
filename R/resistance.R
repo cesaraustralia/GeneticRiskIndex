@@ -5,8 +5,8 @@
 # taxa is a dataframe, taxonpath is the directory
 # where taxon directries are created
 prepare_resistance_files <- function(taxa, taxonpath) {
-  for (ala_search_term in taxa$ala_search_term) {
-    taxon <- filter(taxa, ala_search_term == ala_search_term)
+  for (i in 1:nrow(taxa)) {
+    taxon <- taxa[i, ] 
     if (taxon$resist_model_type[[1]] == "Species") {
       download_hdm(taxon, taxonpath)
     } else {

@@ -16,12 +16,29 @@ ala_config(email=ala_email)
 MAXCOUNT <- 10000
 MINCOUNT <- 50
 MINPROPINSTATE <- 0.1
-RESISTANCE_RASTER <- "sbv.tif"
+HABITAT_RASTER <- "sbv.tif"
+HABITAT_RASTER_PATH <- file.path(datapath, HABITAT_RASTER)
+RESISTANCE_RASTER <- "resistance.tif"
 RESISTANCE_RASTER_PATH <- file.path(datapath, RESISTANCE_RASTER)
 FIRE_SEVERITY_RASTER_PATH <- file.path(datapath, "fire_severity.tif")
+TAXA_CSV_PATH <- file.path(datapath, "taxa.csv")
 
-RESISTANCE_RASTER_PATH %>% terra::rast() %>% plot
-FIRE_SEVERITY_RASTER_PATH %>% terra::rast() %>% plot
+FIRE_SEVERITY_RASTER_URL = "https://genetic-risk-index-bucket.s3.ap-southeast-2.amazonaws.com/fire_severity.tif"
+HABITAT_RASTER_URL = "https://genetic-risk-index-bucket.s3.ap-southeast-2.amazonaws.com/sbv.tif"
+TAXA_URL = "https://genetic-risk-index-bucket.s3.ap-southeast-2.amazonaws.com/taxa.csv"
+
+# Download
+maybe_download(FIRE_SEVERITY_RASTER_URL, FIRE_SEVERITY_RASTER_PATH)
+maybe_download(HABITAT_RASTER_URL, HABITAT_RASTER_PATH)
+maybe_download(TAXA_URL, TAXA_CSV_PATH)
+
+# Convert habitat to resistance
+habitat_to_resistance(HABITAT_RASTER_PATH, RESISTANCE_RASTER_PATH)
+
+# Plot rasters
+# HABITAT_RASTER_PATH %>% terra::rast() %>% plot
+# RESISTANCE_RASTER_PATH %>% terra::rast() %>% plot
+# FIRE_SEVERITY_RASTER_PATH %>% terra::rast() %>% plot
 
 # Observation prefiltering constants
 STATE <- "Victoria"
@@ -30,10 +47,13 @@ BASIS <- "HumanObservation"
 
 mask_layer <- terra::rast(RESISTANCE_RASTER_PATH) < 0
 terra::crs(mask_layer) <- as.character(sp::CRS(paste0("+init=epsg:", METRIC_EPSG)))
-plot(mask_layer)
+# plot(mask_layer)
 
-taxa_csv <- file.path(datapath, "taxa.csv")
-taxa <- read.csv(taxa_csv, header = TRUE)
+# Load main taxa dataframe from csv
+taxa <- read.csv(TAXA_CSV_PATH, header = TRUE)
+
+
+# Precategorize based on counts
 
 # Categorize risk using queries to ALA: slow.
 categorized_taxa <- precategorize_risk(taxa)
@@ -57,28 +77,21 @@ if (nrow(unassessed_taxa) > 0) {
 write_csv(distance_taxa, file.path(datapath, "distance.csv"))
 write_csv(resistance_taxa, file.path(datapath, "resistance"))
 
-process_observations(head(remaining_taxa, 3), mask_layer, taxapath)
+# Manual single taxon observations and clusering for testing:
+
+# taxon <- remaining_taxa[i, ] 
+# obs <- load_or_dowload_obs(taxon, taxapath)
+# head(obs)
+# filtered <- filter_observations(obs, taxon)
+# head(filtered)
+# clustered <- cluster_observations(obs, taxon)
+# head(clustered)
+# fn <- write_cluster_rasters(clustered, taxon, mask_layer, taxapath)
+# fn[1] %>% terra::rast() %>% plot
+# fn[2] %>% terra::rast() %>% plot
+
+# Automated: process observations for all taxa
+process_observations(head(remaining_taxa, 4), mask_layer, taxapath)
 
 # Download and write raster files for resistance models
 prepare_resistance_files(resistance_taxa, taxapath)
-
-# Manual step-by-step methods for testing
-# taxon <- head(taxa, 1)
-
-# Enter an ALA search term
-taxon <- filter(taxa, ala_search_term == "Crinia parinsignifera")
-# Or a number 
-taxon <- remaining_taxa[10,]
-# Get observations
-obs <- load_or_dowload_obs(taxon, taxapath)
-head(obs)
-# Filter
-filtered <- filter_observations(obs, taxon)
-head(filtered)
-# Cluster
-clustered <- cluster_observations(obs, taxon)
-head(clustered)
-# Write and view rasters
-fn <- write_cluster_rasters(clustered, taxon, mask_layer, taxapath)
-fn[1] %>% terra::rast() %>% plot
-fn[2] %>% terra::rast() %>% plot

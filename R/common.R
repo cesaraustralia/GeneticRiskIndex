@@ -25,3 +25,9 @@ taxon_path <- function(taxon, taxapath) {
   dir.create(taxonpath, recursive = TRUE)
   return(taxonpath)
 }
+
+maybe_download <- function(url, path) {
+  if (!file.exists(path)) {
+    download.file(url, path)
+  }
+}
