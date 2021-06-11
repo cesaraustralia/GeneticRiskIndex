@@ -15,6 +15,8 @@ ala_config(email=ala_email)
 # TODO: make this a dict to pass to prefilter_taxa() ?
 MAXCOUNT <- 10000
 MINCOUNT <- 50
+MAX_CLUSTERS <- 80
+
 MINPROPINSTATE <- 0.1
 HABITAT_RASTER <- "sbv.tif"
 HABITAT_RASTER_PATH <- file.path(datapath, HABITAT_RASTER)
@@ -91,7 +93,13 @@ write_csv(resistance_taxa, file.path(datapath, "resistance"))
 # fn[2] %>% terra::rast() %>% plot
 
 # Automated: process observations for all taxa
-process_observations(head(remaining_taxa, 4), mask_layer, taxapath)
+clustered_taxa <- process_observations(resistance_taxa, mask_layer, taxapath)
+
+common_resistance_taxa <- filter(clustered_taxa, num_clusters >= MAX_CLUSTERS)
+rare_resistance_taxa <- filter(clustered_taxa, num_clusters < MAX_CLUSTERS)
+
+write_csv(common_resistance_taxa, file.path(datapath, "distance.csv"))
+write_csv(rare_resistance_taxa, file.path(datapath, "resistance"))
 
 # Download and write raster files for resistance models
-prepare_resistance_files(resistance_taxa, taxapath)
+prepare_resistance_files(rare_resistance_taxa, taxapath)

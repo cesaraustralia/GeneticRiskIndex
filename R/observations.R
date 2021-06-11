@@ -4,15 +4,18 @@
 # Keeping this in the main script as it is important to verify
 # the steps we are using
 process_observations <- function(taxa, mask_layer, taxapath, force_download=FALSE) {
-  for (i in 1:nrow(taxa)) {
-    taxon <- taxa[i, ] 
+  clustered_taxa <- add_column(taxa, num_clusters = 0) 
+  for (i in 1:nrow(clustered_taxa)) {
+    taxon <- clustered_taxa[i, ] 
     print(paste0("Taxon: ", taxon$ala_search_term))
     obs <- load_or_dowload_obs(taxon, taxapath, force_download) %>%
       filter_observations(taxon) %>%
       cluster_observations(taxon)
+    clustered_taxa[i, "num_clusters"] <- max(obs$clusters) 
     print(paste0("  num observations: ", nrow(obs)))
     write_cluster_rasters(obs, taxon, mask_layer, taxapath)
   }
+  return(clustered_taxa)
 }
 
 # Retrieving observation data from ALA ######################################################
