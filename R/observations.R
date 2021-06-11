@@ -44,7 +44,7 @@ read_cached_observations <- function(taxon, csv_path) {
 download_observations <- function(taxon) {
   print(paste0("  Retrieving observations from ALA for ", taxon$ala_search_term))
   obs <- ala_occurrences(
-    taxa = select_taxa(ala_search_term),
+    taxa = select_taxa(taxon$ala_search_term),
     filters = select_filters(
       # Limit observations by year, basis and state
       year = TIMESPAN,
