@@ -1,8 +1,4 @@
-library(sf)
-library(terra)
-library(dplyr)
-library(tidyverse)
-
+# Remove obsevations according to fire severity at the location
 # obs are observations returned by galah,
 # taxon is a single row of the taxa dataframe
 filter_by_fire_severity <- function(obs, taxon) {

@@ -1,19 +1,23 @@
 
-# "https://maps2.biodiversity.vic.gov.au/Models/SMP_Dromaius%20novaehollandiae_Emu_10001.zip"
 
+# Main method to call from scripts
 # Set up files for use by Circuitscape.jl later on
-prepare_resistance_files <- function(taxa, path) {
-  for (taxon_id in taxa$taxon_concept_id) {
-    taxon <- filter(taxa, taxon_concept_id == taxon_id)
+# taxa is a dataframe, taxonpath is the directory
+# where taxon directries are created
+prepare_resistance_files <- function(taxa, taxonpath) {
+  for (ala_search_term in taxa$ala_search_term) {
+    taxon <- filter(taxa, ala_search_term == ala_search_term)
     if (taxon$resist_model_type[[1]] == "Species") {
-      download_hdm(taxon, path)
+      download_hdm(taxon, taxonpath)
     } else {
-      link_generic_hdm(taxon, path)
+      link_generic_hdm(taxon, taxonpath)
     }
   }
 }
 
 # Download the HDM layer for this taxon
+# Formatted as:
+# "https://maps2.biodiversity.vic.gov.au/Models/SMP_Dromaius%20novaehollandiae_Emu_10001.zip"
 download_hdm <- function(taxon, path) {
   taxon_id <- taxon$vic_taxon_id[[1]]
   taxon_escaped <- gsub(" ", "%20", taxon$delwp_taxon)[[1]]

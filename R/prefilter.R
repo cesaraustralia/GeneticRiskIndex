@@ -1,4 +1,27 @@
-# Prefiltering
+# Prefiltering #############################################################
+
+# Main function called from scripts
+# Categorizes risk where distance/resistance are not needed
+# This has to be done in chunks as ALA database dies somewhere 
+# around 1000 rows
+precategorize_risk <- function(taxa) {
+    n <- nrow(taxa)
+    r <- rep(1:ceiling(n/GALAH_MAXROWS), each=GALAH_MAXROWS)[1:n]
+    s <- lapply(split(taxa, r), precategorize_chunk)
+    # Split apply combine chunks
+    do.call(rbind, s)
+}
+
+precategorize_chunk <- function(taxa) {
+   taxa %>% add_count_cols() %>%
+     add_risk_col() %>%
+     label_high_count() %>%
+     label_low_count() # %>%
+     # label_low_regional_relevance() %>%
+     # label_data_deficient()
+}
+
+# ALA queries #############################################################
 
 # Retreive state counts from ALA
 get_state_counts <- function(taxa) {
@@ -29,23 +52,8 @@ get_all_counts <- function(taxa) {
   )
 }
 
-# Categorizes risk where distance/resistance are not needed
-precategorize_risk <- function(taxa) {
-    n <- nrow(taxa)
-    r <- rep(1:ceiling(n/GALAH_MAXROWS), each=GALAH_MAXROWS)[1:n]
-    s <- lapply(split(taxa, r), precategorize_block)
-    # Split apply combine chunks
-    do.call(rbind, s)
-}
 
-precategorize_block <- function(taxa) {
-   taxa %>% add_count_cols() %>%
-     add_risk_col() %>%
-     label_high_count() %>%
-     label_low_count() # %>%
-     # label_low_regional_relevance() %>%
-     # label_data_deficient()
-}
+# Filtering #############################################################
 
 # Label very common species
 label_high_count <- function(taxa) {
