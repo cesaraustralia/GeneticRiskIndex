@@ -106,4 +106,6 @@ write_csv(common_resistance_taxa, file.path(groupingspath, "common_resistance_ta
 write_csv(rare_resistance_taxa, file.path(groupingspath, "rare_resistance_taxa.csv"))
 
 # Download and write raster files for resistance models
-prepare_resistance_files(rare_resistance_taxa, taxapath)
+if (nrow(rare_resistance_taxa) > 0) {
+  prepare_resistance_files(rare_resistance_taxa, taxapath)
+}
