@@ -4,6 +4,7 @@ projectdir = dirname(Pkg.project().path)
 datadir = joinpath(homedir(), "data")
 
 job_taxon = first(readlines(joinpath(datadir, "job.txt")))
+@show job_taxon
 
 taxondir = joinpath(datadir, "taxa", job_taxon) 
 localdir = joinpath(projectdir, "data")
@@ -14,6 +15,13 @@ isdir(taxondir) || error("taxon directory $taxondir does not exist")
 if !isdir(joinpath(projectdir, "data"))
     symlink(taxondir, localdir, dir_target=true)
 end
+
+# Check rasters:
+using GeoData, Plots
+resistance = geoarray(joinpath(localdir, "resistance.tif"))
+clusters = geoarray(joinpath(localdir, "clusters.tif"))
+resistance2 = resample(resistance) 
+geoarray(joinpath(localdir, "short_circuit.tif"); mappedcrs=EPSG(4326)) |> plot
 
 # Run the model
 seconds_elapsed = @elapsed compute(joinpath(projectdir, "circuitscape_model.ini"))

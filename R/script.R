@@ -8,8 +8,8 @@ source("fire_severity.R")
 datapath <- file.path(path_home(), "data")
 taxapath <- file.path(datapath, "taxa")
 groupingspath <- file.path(datapath, "groupings")
-dir.create(taxapath)
-dir.create(groupingspath)
+dir.create(taxapath, recursive = TRUE)
+dir.create(groupingspath, recursive = TRUE)
 ala_email <- "rafaelschouten@gmail.com"
 ala_config(email=ala_email)
 
@@ -54,7 +54,7 @@ terra::crs(mask_layer) <- as.character(sp::CRS(paste0("+init=epsg:", METRIC_EPSG
 # plot(mask_layer)
 
 # Load main taxa dataframe from csv
-taxa <- read.csv(TAXA_CSV_PATH, header = TRUE)
+taxa <- read.csv(TAXA_CSV_PATH, header = TRUE) %>% head(40)
 
 
 # Precategorize based on counts
@@ -98,11 +98,10 @@ write_csv(resistance_taxa, file.path(groupingspath, "resistance.csv"))
 clustered_taxa <- process_observations(resistance_taxa, mask_layer, taxapath)
 
 failed_resistance_taxa <- filter(clustered_taxa, risk == "failed")
-failed_resistance_taxa$ala_search_term
 common_resistance_taxa <- filter(clustered_taxa, num_clusters >= MAX_CLUSTERS, risk != "failed")
 rare_resistance_taxa <- filter(clustered_taxa, num_clusters < MAX_CLUSTERS, risk != "failed")
 
-write_csv(failed_resistance_taxa, file.path(groupingspath, "failed_resistance_taxa"))
+write_csv(failed_resistance_taxa, file.path(groupingspath, "failed_resistance_taxa.csv"))
 write_csv(common_resistance_taxa, file.path(groupingspath, "common_resistance_taxa.csv"))
 write_csv(rare_resistance_taxa, file.path(groupingspath, "rare_resistance_taxa.csv"))
 

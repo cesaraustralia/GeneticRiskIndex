@@ -1,2 +1,4 @@
 [deps]
 Circuitscape = "2b7a1792-8151-5239-925d-e2b8fdfa3201"
+DiskArrays = "3c3547ce-8d99-4f5e-a174-61eb10b00ae3"
+PkgTemplates = "14b8a8f1-9102-5b29-a752-f990bacb7fe1"

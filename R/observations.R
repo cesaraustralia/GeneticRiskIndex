@@ -4,7 +4,7 @@
 # Keeping this in the main script as it is important to verify
 # the steps we are using
 process_observations <- function(taxa, mask_layer, taxapath, force_download=FALSE) {
-  clustered_taxa <- add_column(taxa, num_clusters = 0) 
+  clustered_taxa <- add_column(taxa, num_clusters = 0, error = "") 
   num_clusters <- 0
   for (i in 1:nrow(clustered_taxa)) {
     taxon <- clustered_taxa[i, ] 
@@ -17,8 +17,11 @@ process_observations <- function(taxa, mask_layer, taxapath, force_download=FALS
       write_cluster_rasters(obs, taxon, mask_layer, taxapath)
       max(obs$clusters)
     }, error = function(e) {
+      # Record all errors with for degbugging later
+      clustered_taxa[i, "error"] <- e
       0
     }, finally = {
+      # Classify failed taxa
       clustered_taxa[i, "risk"] <- "failed"
     })
     clustered_taxa[i, "num_clusters"] <- num_clusters

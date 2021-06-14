@@ -37,6 +37,19 @@ resource "aws_instance" "r" {
     Name = "${var.project}-r"
   }
 
+  connection {
+    host        = self.public_ip
+    type        = "ssh"
+    user        = "ubuntu"
+    private_key = file(var.private_key)
+  }
+
+  # provisioner "remote-exec" {
+    # inline = [
+      # "git pull -C /home/ubuntu/GeneticRiskIndex",
+    # ]
+  # }
+
   # provisioner "local-exec" {
     # command = "link -s /etc/efs-storage/taxon/${each.key} ~/taxon_data"
   # }
