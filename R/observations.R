@@ -9,22 +9,22 @@ process_observations <- function(taxa, mask_layer, taxapath, force_download=FALS
   for (i in 1:nrow(clustered_taxa)) {
     taxon <- clustered_taxa[i, ] 
     print(paste0("Taxon: ", taxon$ala_search_term))
-    num_clusters <- tryCatch({
+    out <- tryCatch({
       obs <- load_or_dowload_obs(taxon, taxapath, force_download) %>%
         filter_observations(taxon) %>%
         cluster_observations(taxon)
       print(paste0("  num observations: ", nrow(obs)))
       write_cluster_rasters(obs, taxon, mask_layer, taxapath)
-      max(obs$clusters)
+      c("", max(obs$clusters), "unknown")
     }, error = function(e) {
       # Record all errors with for degbugging later
-      clustered_taxa[i, "error"] <- e
-      0
+      c(e, 0, "failed")
     }, finally = {
       # Classify failed taxa
-      clustered_taxa[i, "risk"] <- "failed"
     })
-    clustered_taxa[i, "num_clusters"] <- num_clusters
+    clustered_taxa[i, "error"] <- out[[1]]
+    clustered_taxa[i, "num_clusters"] <- out[[2]]
+    clustered_taxa[i, "risk"] <- out[[3]]
   }
   return(clustered_taxa)
 }
@@ -93,7 +93,6 @@ remove_location_duplicates <- function(obs) {
 }
 
 cluster_observations <- function(obs, taxon) {
-    print(taxon$ala_search_term)
     clustered_obs <- obs %>%
       add_euclidan_coords() %>%
       add_clusters(taxon$epsilon)

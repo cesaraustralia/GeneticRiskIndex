@@ -26,6 +26,7 @@ taxon_path <- function(taxon, taxapath) {
   return(taxonpath)
 }
 
+# Download from a URL if the file doesn't exist allready
 maybe_download <- function(url, path) {
   if (!file.exists(path)) {
     download.file(url, path)
