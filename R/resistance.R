@@ -7,6 +7,7 @@
 prepare_resistance_files <- function(taxa, taxonpath) {
   for (i in 1:nrow(taxa)) {
     taxon <- taxa[i, ] 
+    taxon <- filter(taxa, ala_search_term == ala_search_term)
     if (taxon$resist_model_type[[1]] == "Species") {
       download_hdm(taxon, taxonpath)
     } else {
@@ -27,9 +28,11 @@ download_hdm <- function(taxon, path) {
   download_dir <- file.path(taxon_dir, "download")
   dir.create(download_dir, recursive = TRUE)
   zippath <- file.path(download_dir, "hdm.zip")
-  download.file(url, zippath)
-  unzip(zippath, exdir=download_dir)
-  file.remove(zippath)
+  if !(dir.exists(download_dir)) {
+    download.file(url, zippath)
+    unzip(zippath, exdir=download_dir)
+    file.remove(zippath)
+  }
   habitat_tif <- Sys.glob(file.path(download_dir, "*.tif"))[1]
   resistance_tif <- file.path(taxon_dir, RESISTANCE_RASTER)
   habitat_to_resistance(habitat_tif, resistance_tif)
