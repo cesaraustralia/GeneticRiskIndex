@@ -28,7 +28,7 @@ download_hdm <- function(taxon, path) {
   download_dir <- file.path(taxon_dir, "download")
   dir.create(download_dir, recursive = TRUE)
   zippath <- file.path(download_dir, "hdm.zip")
-  if !(dir.exists(download_dir)) {
+  if (!dir.exists(download_dir)) {
     download.file(url, zippath)
     unzip(zippath, exdir=download_dir)
     file.remove(zippath)
