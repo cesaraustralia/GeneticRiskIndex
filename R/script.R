@@ -54,7 +54,7 @@ terra::crs(mask_layer) <- as.character(sp::CRS(paste0("+init=epsg:", METRIC_EPSG
 # plot(mask_layer)
 
 # Load main taxa dataframe from csv
-taxa <- read.csv(TAXA_CSV_PATH, header = TRUE) %>% head(40)
+taxa <- read.csv(TAXA_CSV_PATH, header = TRUE)
 
 
 # Precategorize based on counts
