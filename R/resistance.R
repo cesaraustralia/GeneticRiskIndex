@@ -7,7 +7,6 @@
 prepare_resistance_files <- function(taxa, taxonpath) {
   for (i in 1:nrow(taxa)) {
     taxon <- taxa[i, ] 
-    taxon <- filter(taxa, ala_search_term == ala_search_term)
     if (taxon$resist_model_type[[1]] == "Species") {
       download_hdm(taxon, taxonpath)
     } else {
@@ -28,7 +27,8 @@ download_hdm <- function(taxon, path) {
   download_dir <- file.path(taxon_dir, "download")
   dir.create(download_dir, recursive = TRUE)
   zippath <- file.path(download_dir, "hdm.zip")
-  if (!dir.exists(download_dir)) {
+  # If the download doesn't exist, download it
+  if (!dir.exists(download_dir) || is.na(Sys.glob(file.path(download_dir, "*.tif"))[1])) { 
     download.file(url, zippath)
     unzip(zippath, exdir=download_dir)
     file.remove(zippath)
@@ -40,12 +40,14 @@ download_hdm <- function(taxon, path) {
 
 # Invert percentage from % habitat quality to % movement resistance
 habitat_to_resistance <- function(habitat_path, resistance_path) {
-  terra::writeRaster(100 - terra::rast(habitat_path), resistance_path, overwrite=TRUE)
+  cat("Create resistance tif:\n", resistance_path, "\nfrom habitat tif:\n", habitat_path, "\n\n")
+  terra::writeRaster(101 - terra::rast(habitat_path), resistance_path, overwrite=TRUE)
 }
 
-# Make a symlink to the generic hdm file instead of
+# Make a symlink to the generic HDM file instead of
 # Downloading a specific file
 link_generic_hdm <- function(taxon, path) {
   dest <- file.path(taxon_path(taxon, path), RESISTANCE_RASTER)
+  cat("Linking generic resistance HDM for", taxon$ala_search_term, "to:\n", dest, "\n\n")
   file.symlink(RESISTANCE_RASTER_PATH, dest)
 }

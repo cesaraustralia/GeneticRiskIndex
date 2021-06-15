@@ -12,6 +12,9 @@ precategorize_risk <- function(taxa) {
     do.call(rbind, s)
 }
 
+# Precategorise risk for a chunk of the dataframe.
+# This filters out high and low count values, regionally
+# irrelevant species and data deficient species.
 precategorize_chunk <- function(taxa) {
    taxa %>% add_count_cols() %>%
      add_risk_col() %>%
@@ -55,29 +58,6 @@ get_all_counts <- function(taxa) {
 
 # Filtering #############################################################
 
-# Label very common species
-label_high_count <- function(taxa) {
-  taxa$risk[taxa$state_count > MAXCOUNT] <- "abundant"
-  return(taxa)
-}
-
-# Label very rare species
-label_low_count <- function(taxa) {
-  taxa$risk[taxa$state_count < MINCOUNT] <- "rare"
-  return(taxa)
-}
-
-label_low_regional_relevance <- function(taxa) {
-  # TODO: is the proportion enough?
-  taxa$risk[(taxa$state_count / taxa$count) < MINPROPINSTATE] <- paste0("more common outside", STATE) 
-}
-
-label_data_deficient <- function(taxa) {
-  # TODO: add something here
-  # not sure what data deficient means in practice
-  return(taxa)
-}
-
 # Add a column that classifies risk. Initially "unknown".
 add_risk_col <- function(taxa) {
   taxa$risk <- rep("unknown", length(taxa$ala_search_term))
@@ -90,5 +70,30 @@ add_count_cols <- function(taxa) {
   all_counts <- get_all_counts(taxa) %>% rename(ala_search_term = species)
   taxa <- merge(taxa, state_counts, by = "ala_search_term", all.x=TRUE)
   taxa <- merge(taxa, all_counts, by = "ala_search_term", all.x=TRUE)
+  return(taxa)
+}
+
+# Label very common species as "abundant"
+label_high_count <- function(taxa) {
+  taxa$risk[taxa$state_count > MAXCOUNT] <- "abundant"
+  return(taxa)
+}
+
+# Label very rare species as "rare"
+label_low_count <- function(taxa) {
+  taxa$risk[taxa$state_count < MINCOUNT] <- "rare"
+  return(taxa)
+}
+
+# Label species not relevent to STATE e.g. Victoria
+label_low_regional_relevance <- function(taxa) {
+  # TODO: is the proportion enough?
+  taxa$risk[(taxa$state_count / taxa$count) < MINPROPINSTATE] <- paste0("more common outside", STATE) 
+}
+
+# Label species for which there is not enough data.
+label_data_deficient <- function(taxa) {
+  # TODO: add something here
+  # not sure what data deficient means in practice
   return(taxa)
 }
