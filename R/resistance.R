@@ -7,11 +7,15 @@
 prepare_resistance_files <- function(taxa, taxonpath) {
   for (i in 1:nrow(taxa)) {
     taxon <- taxa[i, ] 
-    if (taxon$resist_model_type[[1]] == "Species") {
-      download_hdm(taxon, taxonpath)
-    } else {
-      link_generic_hdm(taxon, taxonpath)
-    }
+    tryCatch({
+      if (taxon$resist_model_type[[1]] == "Species") {
+        download_hdm(taxon, taxonpath)
+      } else {
+        link_generic_hdm(taxon, taxonpath)
+      }
+    }, error = function(e) {
+      warning("Failed to download resistance file for ", taxon$ala_search_term)
+    })
   }
 }
 
