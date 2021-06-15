@@ -133,27 +133,25 @@ write_cluster_rasters <- function(obs, taxon, mask_layer, taxapath) {
 # Add buffer around clusters
 buffer_clustered <- function(geoms, eps) {
   dplyr::filter(geoms, clusters != 0) %>% 
-    st_buffer(dist = eps * 1000) %>% 
-    st_union()
+    sf::st_buffer(dist = eps * 1000) %>% 
+    dplyr::group_by(clusters) %>% 
+    dplyr::summarise(clusters = unique(clusters))
 }
 
 # Add buffer around orphans
 buffer_orphans <- function(geoms, eps) {
   dplyr::filter(geoms, clusters == 0) %>% 
-    st_buffer(dist = eps * 1000) %>% 
-    st_union()
+    sf::st_buffer(dist = eps * 1000) %>% 
+    dplyr::group_by(clusters) %>% 
+    dplyr::summarise(clusters = unique(clusters))
 }
 
 # Convert points to raster file matching mask_layer
 geom_to_raster <- function(geom, type, taxon, mask_layer, taxonpath) {
-  # convert points to raster
-  cell_obs <- terra::extract(mask_layer, vect(geom), cells = TRUE) %>% 
-    pull(cell) %>% 
-    unlist()
-  obs_raster <- mask_layer
-  obs_raster[cell_obs] <- 1
+  # convert polygons to raster
+  obs_raster <- terra::rasterize(terra::vect(geom), mask_layer, field = "clusters")
   # write it to disk
-  filename = file.path(taxonpath, paste0(type, ".tif"))
+  filename <- file.path(taxonpath, paste0(type, ".tif"))
   print(paste0("  Writing ", filename))
   terra::writeRaster(obs_raster, filename, overwrite=TRUE)
   return(filename)
