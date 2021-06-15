@@ -67,11 +67,11 @@ filtered_taxa <- filter(categorized_taxa, risk != "unknown")
 write_csv(filtered_taxa, file.path(groupingspath, "filtered_taxa.csv"))
 
 # Taxa we can't assess currently
-unassessed_taxa <- filter(remaining_taxa, risk == "unknown", assess != "ALA", taxon_level != "Base")
+unassessed_taxa <- filter(filtered_taxa, risk == "unknown", assess != "ALA", taxon_level != "Base")
 write_csv(unassessed_taxa, file.path(groupingspath, "unassessed_taxa.csv"))
 
 # Taxa we can assess
-assesible_taxa <- filter(remaining_taxa, risk == "unknown", assess == "ALA", taxon_level == "Base")
+assesible_taxa <- filter(filtered_taxa, risk == "unknown", assess == "ALA", taxon_level == "Base")
 
 # Taxa to access based on distance metrics
 distance_taxa <- filter(assesible_taxa, disperse_model == "Distance")
