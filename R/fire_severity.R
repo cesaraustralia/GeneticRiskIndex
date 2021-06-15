@@ -3,8 +3,8 @@
 # taxon is a single row of the taxa dataframe
 filter_by_fire_severity <- function(obs, taxon) {
   fire_rating <- taxon$fire_rating
-  # NAs go to maximum value
-  fire_rating[is.na(fire_rating)] <- 6
+  # NAs go to no burn value
+  fire_rating[is.na(fire_rating)] <- 0
 
   # read in raster layer data:
   severity_rast <- terra::rast(FIRE_SEVERITY_RASTER_PATH)
