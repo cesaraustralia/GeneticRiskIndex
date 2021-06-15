@@ -37,7 +37,7 @@ resource "aws_instance" "julia-ami-template" {
       "mkdir data",
       "sudo mount -t efs -o tls ${aws_efs_file_system.efs-storage.id} data",
       "sudo chown -R ubuntu data",
-      "echo '${aws_efs_file_system.efs-storage.id}:/ /home/ubuntu/data/ efs uid=1000,vers=4.1,rw,tls,_netdev,relatime,acl,nofail 0 0' | sudo tee -a /etc/fstab"
+      "echo '${aws_efs_file_system.efs-storage.id}:/ /home/ubuntu/data/ efs    rw,user,_netdev 0 0' | sudo tee -a /etc/fstab"
     ]
   }
 
