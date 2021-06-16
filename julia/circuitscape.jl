@@ -1,10 +1,11 @@
 using Circuitscape, Pkg
 
+job_taxon = ARGS[1] 
+
+@show job_taxon
+
 projectdir = dirname(Pkg.project().path)
 datadir = joinpath(homedir(), "data")
-
-job_taxon = first(readlines(joinpath(datadir, "job.txt")))
-@show job_taxon
 
 taxondir = joinpath(datadir, "taxa", job_taxon) 
 localdir = joinpath(projectdir, "data")
