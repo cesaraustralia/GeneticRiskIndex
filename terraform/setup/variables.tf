@@ -56,3 +56,13 @@ variable "ami" {
     "ap-southeast-2" = "ami-03ec1fe05b3849c74" # Ubuntu 20.04 LTS amd64
   }
 }
+
+variable "julia_cpus" {
+  type = number
+  default = 4
+}
+
+variable "julia_instance_memory" {
+  type = number
+  default = 8192
+}
