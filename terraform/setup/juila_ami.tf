@@ -54,3 +54,8 @@ resource "aws_ami_from_instance" "julia-ami" {
   depends_on = [aws_instance.julia-ami-template]
   source_instance_id = aws_instance.julia-ami-template.id
 }
+
+output "julia-ip" {
+  description = "The ip of the template Julia instance"
+  value       = aws_instance.julia-ami-template.public_ip
+}
