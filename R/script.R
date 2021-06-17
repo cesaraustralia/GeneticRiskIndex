@@ -66,21 +66,22 @@ filtered_taxa <- filter(categorized_taxa, risk != "unknown")
 write_csv(filtered_taxa, file.path(groupingspath, "filtered_taxa.csv"))
 
 # Taxa we can't assess currently
-unassessed_taxa <- filter(categorized_taxa, risk == "unknown", assess != "ALA", taxon_level != "Base")
+unassessed_taxa <- filter(categorized_taxa, risk == "unknown", assess != "ALA")
+head(unassessed_taxa)
 write_csv(unassessed_taxa, file.path(groupingspath, "unassessed_taxa.csv"))
 
 # Taxa we can assess
-assesible_taxa <- filter(categorized_taxa, risk == "unknown", assess == "ALA", taxon_level == "Base")
+assesible_taxa <- filter(categorized_taxa, risk == "unknown", assess == "ALA")
 
 # Taxa to access based on distance metrics
 distance_taxa <- filter(assesible_taxa, disperse_model == "Distance")
 head(distance_taxa)
-write_csv(distance_taxa, file.path(groupingspath, "distance.csv"))
+write_csv(distance_taxa, file.path(groupingspath, "distance_taxa.csv"))
 
 # Taxa to access with Circuitscape resistance models
 resistance_taxa <- filter(assesible_taxa, disperse_model == "Habitat")
 head(resistance_taxa)
-write_csv(resistance_taxa, file.path(groupingspath, "resistance.csv"))
+write_csv(resistance_taxa, file.path(groupingspath, "all_resistance_taxa.csv"))
 
 
 
@@ -122,6 +123,6 @@ nrow(circuitscape_taxa)
 write_csv(circuitscape_taxa, file.path(groupingspath, "circuitscape_taxa.csv"))
 
 # Download and write raster files for circuitscape resistance models
-if (nrow(rare_resistance_taxa) > 0) {
+if (nrow(circuitscape_taxa) > 0) {
   prepare_resistance_files(circuitscape_taxa, taxapath)
 }
