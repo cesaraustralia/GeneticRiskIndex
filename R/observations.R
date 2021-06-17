@@ -21,8 +21,9 @@ process_observations <- function(taxa, mask_layer, taxapath, force_download=FALS
 
       list("", max(obs$cluster), "unknown")
     }, error = function(e) {
+      error_without_linebreaks <- gsub("[\r\n]", "", e)
       # Return error for debugging later
-      list(e, 0, "failed")
+      list(error_without_linebreaks, 0, "failed")
     })
 
     # Add portential error messages, cluser number, and risk category to data.
