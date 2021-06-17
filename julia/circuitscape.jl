@@ -1,11 +1,12 @@
 using Circuitscape, Pkg
 
-job_taxon = ARGS[1]
+job_taxon = ARGS[1] 
 datadir = ARGS[2] 
 
 @show job_taxon
 
 projectdir = dirname(Pkg.project().path)
+datadir = joinpath("/efs")
 
 taxondir = joinpath(datadir, "taxa", job_taxon) 
 localdir = joinpath(projectdir, "data")
