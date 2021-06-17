@@ -111,17 +111,17 @@ failed_resistance_taxa$error
 write_csv(failed_resistance_taxa, file.path(groupingspath, "failed_resistance_taxa.csv"))
 
 # Taxa that we don't need to process - these have a lot of clusters
-common_resistance_taxa <- filter(clustered_taxa, num_clusters >= MAX_CLUSTERS, risk != "failed")
-head(common_resistance_taxa)
-write_csv(common_resistance_taxa, file.path(groupingspath, "common_resistance_taxa.csv"))
+many_clustered_taxa <- filter(clustered_taxa, num_clusters >= MAX_CLUSTERS, risk != "failed")
+head(many_clustered_taxa)
+write_csv(many_clustered_taxa, file.path(groupingspath, "many_clustered_taxa.csv"))
 
 # Taxa that we need to process with circuitscape
-rare_resistance_taxa <- filter(clustered_taxa, num_clusters < MAX_CLUSTERS, risk != "failed")
-head(rare_resistance_taxa)
-nrow(rare_resistance_taxa)
-write_csv(rare_resistance_taxa, file.path(groupingspath, "rare_resistance_taxa.csv"))
+circuitscape_taxa <- filter(clustered_taxa, num_clusters < MAX_CLUSTERS, risk != "failed")
+head(circuitscape_taxa)
+nrow(circuitscape_taxa)
+write_csv(circuitscape_taxa, file.path(groupingspath, "circuitscape_taxa.csv"))
 
 # Download and write raster files for circuitscape resistance models
 if (nrow(rare_resistance_taxa) > 0) {
-  prepare_resistance_files(rare_resistance_taxa, taxapath)
+  prepare_resistance_files(circuitscape_taxa, taxapath)
 }
