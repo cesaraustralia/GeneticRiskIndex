@@ -23,5 +23,5 @@ seconds_elapsed = @elapsed compute(joinpath(projectdir, "circuitscape_model.ini"
 # Store the time taken to run it
 open("data/run_stats.csv", "w") do io
     println(io, "threads, seconds_elapsed")
-    println(io, string(Threads.nthreads() * ", ", seconds_elapsed))
+    println(io, string(Threads.nthreads(), ", ", seconds_elapsed))
 end
