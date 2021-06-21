@@ -9,12 +9,12 @@ variable "project" {
 
 variable "julia_cpus" {
   type = number
-  default = 2
+  default = 4
 }
 
 variable "julia_instance_memory" {
   type = number
-  default = 2048
+  default = 8192
 }
 
 variable "aws_region" {
@@ -26,7 +26,7 @@ variable "aws_credentials" {
   type = string
 }
 
-variable "resistance_taxa_csv" {
+variable "circuitscape_taxa_csv" {
   type = string
-  default = "resistance.csv"
+  default = "circuitscape_taxa.csv"
 }

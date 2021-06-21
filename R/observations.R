@@ -3,7 +3,7 @@
 
 # Get observation data, cluster it into numbered groups, and write to 
 # both csv and raster files.
-process_observations <- function(taxa, mask_layer, taxapath, force_download=FALSE) {
+process_observations <- function(taxa, mask_layer, taxapath, force_download=FALSE, error=FALSE) {
   clustered_taxa <- add_column(taxa, num_clusters = 0, error = "") 
   num_clusters <- 0
   for (i in 1:nrow(clustered_taxa)) {
@@ -11,25 +11,33 @@ process_observations <- function(taxa, mask_layer, taxapath, force_download=FALS
     cat("\nTaxon: ", taxon$ala_search_term, "\n")
     # Try-catch-finally block to catch any errors that 
     # happen for Individual taxa
-    out <- tryCatch({
-      # Download, filter and cluster observation records
+    if (error) {
       obs <- load_or_dowload_obs(taxon, taxapath, force_download) %>%
         filter_observations(taxon) %>%
         cluster_observations(taxon) 
       # Create rasters with numbered clustered observations
       write_cluster_rasters(obs, taxon, mask_layer, taxapath)
+      clustered_taxa[i, "num_clusters"] <- max(obs$cluster)
+    } else {
+      out <- tryCatch({
+        # Download, filter and cluster observation records
+        obs <- load_or_dowload_obs(taxon, taxapath, force_download) %>%
+          filter_observations(taxon) %>%
+          cluster_observations(taxon)
+        # Create rasters with numbered clustered observations
+        write_cluster_rasters(obs, taxon, mask_layer, taxapath)
 
-      list("", max(obs$cluster), "unknown")
-    }, error = function(e) {
-      error_without_linebreaks <- gsub("[\r\n]", "", e)
-      # Return error for debugging later
-      list(error_without_linebreaks, 0, "failed")
-    })
-
-    # Add portential error messages, cluser number, and risk category to data.
-    clustered_taxa[i, "error"] <- paste(out[1])
-    clustered_taxa[i, "num_clusters"] <- out[2]
-    clustered_taxa[i, "risk"] <- out[3]
+        list("", max(obs$cluster), "unknown")
+      }, error = function(e) {
+        error_without_linebreaks <- gsub("[\r\n]", "", e)
+        # Return error for debugging later
+        list(error_without_linebreaks, 0, "failed")
+      })
+      # Add portential error messages, cluser number, and risk category to data.
+      clustered_taxa[i, "error"] <- paste(out[1])
+      clustered_taxa[i, "num_clusters"] <- out[2]
+      clustered_taxa[i, "risk"] <- out[3]
+    }
   }
   return(clustered_taxa)
 }
@@ -78,7 +86,8 @@ download_observations <- function(taxon) {
 filter_observations <- function(obs, taxon) {
     obs %>%
       maybe_remove_subspecies(taxon) %>%
-      remove_bad_obs() %>%
+      remove_missing_coords() %>%
+      remove_location_duplicates() %>%
       filter_by_fire_severity(taxon)
 }
 
@@ -90,12 +99,6 @@ maybe_remove_subspecies <- function(obs, taxon) {
   } else {
     return(obs)
   }
-}
-
-# Remove observation records with obvious flaws
-remove_bad_obs <- function(obs) {
-  obs %>% remove_missing_coords() %>%
-    remove_location_duplicates()
 }
 
 # Remove coordinates with NA values
@@ -140,40 +143,57 @@ add_clusters <- function(obs, eps) {
 # Write the clustered and orphan observations to raster files
 write_cluster_rasters <- function(obs, taxon, mask_layer, taxapath) {
   taxonpath <- taxon_path(taxon, taxapath)
-  geoms <- sf::st_as_sf(obs, coords = c("x", "y"), crs = METRIC_EPSG)
-  clustered <- buffer_clustered(geoms, taxon$eps)
+  shapes <- sf::st_as_sf(obs, coords = c("x", "y"), crs = METRIC_EPSG)
+  scaled_eps <- taxon$eps * 1000 / 1.9
+
+  # Create a full-sized raster for clusters
+  clustered <- buffer_clustered(shapes, scaled_eps)
   cat("Clusters:", nrow(clustered), "\n")
-  cfn <- geom_to_raster(clustered, "clusters", taxon, mask_layer, taxonpath)
-  orphans <- buffer_orphans(geoms, taxon$eps)
+  cluster_rast <- shape_to_raster(clustered, taxon, mask_layer, taxonpath)
+    
+  # Create a full-sized raster for orphans
+  orphans <- buffer_orphans(shapes, scaled_eps)
   cat("Orphans:", nrow(orphans), "\n")
-  ofn <- geom_to_raster(orphans, "short_circuit", taxon, mask_layer, taxonpath)
-  c(cfn, ofn)
+  orphan_rast <- shape_to_raster(orphans, taxon, mask_layer, taxonpath)
+
+
+  # Make a crop template by trimming the empty values from a
+  # combined cluster/orphan raster, with some added padding.
+  crop_rast = terra::merge(cluster_rast, orphan_rast) %>% trim(padding=0)
+
+  # Crop and write rasters
+  cluster_filename <- file.path(taxonpath, "clusters.tif")
+  orphan_filename <- file.path(taxonpath, "short_circuit.tif")
+  crop(cluster_rast, crop_rast, filename=cluster_filename, overwrite=TRUE)
+  crop(orphan_rast, crop_rast, filename=orphan_filename, overwrite=TRUE)
+
+  return(c(cluster_filename, orphan_filename))
 }
 
 # Add buffer around clusters
-buffer_clustered <- function(geoms, eps) {
-  dplyr::filter(geoms, cluster != 0) %>% 
-    sf::st_buffer(dist = eps * 1000) %>% 
-    dplyr::group_by(cluster) %>% 
-    dplyr::summarise(cluster = unique(cluster))
+buffer_clustered <- function(obs, scaled_eps) {
+  dplyr::filter(obs, cluster != 0) %>% 
+    buffer_obs(scaled_eps)
 }
 
 # Add buffer around orphans
-buffer_orphans <- function(geoms, eps) {
-  dplyr::filter(geoms, cluster == 0) %>% 
-    # TODO: remove 1.9 multiplier and use new data columns
-    sf::st_buffer(dist = eps * 1000 / 1.9) %>%
+buffer_orphans <- function(shapes, scaled_eps) {
+  dplyr::filter(shapes, cluster == 0) %>% 
+    buffer_obs(scaled_eps)
+}
+
+buffer_obs <- function(obs, scaled_eps) {
+  obs %>%
+    sf::st_buffer(dist = scaled_eps) %>% 
     dplyr::group_by(cluster) %>% 
     dplyr::summarise(cluster = unique(cluster))
 }
 
 # Convert points to raster file matching mask_layer
-geom_to_raster <- function(geom, type, taxon, mask_layer, taxonpath) {
-  # convert polygons to raster
-  obs_raster <- terra::rasterize(terra::vect(geom), mask_layer, field = "cluster")
-  # write it to disk
-  filename <- file.path(taxonpath, paste0(type, ".tif"))
-  cat("  Writing ", filename, "\n")
-  terra::writeRaster(obs_raster, filename, overwrite=TRUE)
-  return(filename)
+shape_to_raster <- function(shape, taxon, mask_layer, taxonpath) {
+  if (length(vect(shape)) > 0) {
+      obs_raster <- terra::rasterize(terra::vect(shape), mask_layer, field = "cluster") 
+  } else {
+      mask_layer * 0
+  }
 }

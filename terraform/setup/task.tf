@@ -57,15 +57,12 @@ resource "aws_batch_compute_environment" "circuitscape" {
 
   compute_resources {
     max_vcpus = 8
-
     security_group_ids = [
       aws_security_group.security.id
     ]
-
     subnets = [
       aws_subnet.subnet.id
     ]
-
     type = "FARGATE"
   }
 
@@ -108,13 +105,21 @@ resource "aws_batch_job_definition" "circuitscape" {
   "command": ["julia", "--project=~/GeneticRiskIndex/julia", "~/GeneticRiskIndex/julia/circuitscape.jl", "Ref::taxon_key"],
   "image": "${aws_ami_from_instance.julia-ami.id}",
   "fargatePlatformConfiguration": {
-    "platformVersion": "LATEST"
+    "platformVersion": "1.4.0"
   },
   "resourceRequirements": [
     {"type": "VCPU", "value": "${var.julia_cpus}"},
     {"type": "MEMORY", "value": "${var.julia_instance_memory}"}
   ],
-  "executionRoleArn": "${aws_iam_role.task_execution_role.arn}"
+  "executionRoleArn": "${aws_iam_role.task_execution_role.arn}",
+  "volumes": [
+    {
+      "name": "efs",
+      "efsVolumeConfiguration": {
+        "fileSystemId": "${aws_efs_file_system.efs-storage.id}"
+      }
+    }
+  ]
 }
 CONTAINER_PROPERTIES
 }
