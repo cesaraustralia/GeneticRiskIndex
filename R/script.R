@@ -52,65 +52,52 @@ terra::crs(mask_layer) < as.character(sp::CRS(paste0("+init=epsg:", METRIC_EPSG)
 taxa <- read.csv(TAXA_CSV_PATH, header = TRUE)
 
 
+####################################################################################
 # Precategorize based on counts
 # Categorize risk using queries to ALA: slow.
-categorized_taxa <- precategorize_risk(taxa)
-
-# Taxa we have already assigned risk to in prefiltering
-filtered_taxa <- filter(categorized_taxa, risk != "unknown")
-write_csv(filtered_taxa, file.path(groupingspath, "filtered_taxa.csv"))
-
-# Taxa we can't assess currently
-unassessed_taxa <- filter(categorized_taxa, risk == "unknown", assess != "ALA")
-head(unassessed_taxa)
-write_csv(unassessed_taxa, file.path(groupingspath, "unassessed_taxa.csv"))
-
-# Taxa we can assess
-assesible_taxa <- filter(categorized_taxa, risk == "unknown", assess == "ALA")
+precategorized_taxa <- precategorize_risk(taxa)
 
 # Taxa to access based on distance metrics
-distance_taxa <- filter(assesible_taxa, disperse_model == "Distance")
-head(distance_taxa)
-nrow(distance_taxa)
-write_csv(distance_taxa, file.path(groupingspath, "distance_taxa.csv"))
-
-# Taxa to access with Circuitscape resistance models
-resistance_taxa <- filter(assesible_taxa, disperse_model == "Habitat")
-head(resistance_taxa)
-nrow(resistance_taxa)
-write_csv(resistance_taxa, file.path(groupingspath, "all_resistance_taxa.csv"))
+write_csv(precategorized_taxa, file.path(groupingspath, "precategorized_taxa.csv"))
 
 # Manual single taxon observations and clusering for testing:
-taxon <- failed_resistance_taxa[5, ] 
+taxon <- failed_resistance_taxa[5, ]
 process_observations(taxon, mask_layer, taxapath, error=TRUE)
 
 
-# load/download, filter and cluster observations for all taxa
-clustered_taxa <- process_observations(resistance_taxa, mask_layer, taxapath)
-head(clustered_taxa)
-nrow(clustered_taxa)
+####################################################################################
+# Clustering for Isolatrion by distance and resistance taxa
 
-# Taxa that failed clustering for some reason or other 
-failed_resistance_taxa <- filter(clustered_taxa, risk == "failed")
-head(failed_resistance_taxa)
-nrow(failed_resistance_taxa)
-failed_resistance_taxa$error
-failed_resistance_taxa$ala_search_term
-write_csv(failed_resistance_taxa, file.path(groupingspath, "failed_resistance_taxa.csv"))
-process_observations(failed_resistance_taxa, mask_layer, taxapath)
+isolation_taxa <- filter(precategorized_taxa, filter_category %in% c("isolation_by_distance", "isolation_by_resistance_taxa"))
 
-# Taxa that we don't need to process - these have a lot of clusters
-many_clustered_taxa <- filter(clustered_taxa, num_clusters >= MAX_CLUSTERS, risk != "failed")
-head(many_clustered_taxa)
-write_csv(many_clustered_taxa, file.path(groupingspath, "many_clustered_taxa.csv"))
+# load/download, filter and precluster observations for all taxa
+preclustered_isolation_taxa <- process_observations(isolation_taxa, mask_layer, taxapath)
 
-# Taxa that we need to process with circuitscape
-circuitscape_taxa <- filter(clustered_taxa, num_clusters < MAX_CLUSTERS, risk != "failed")
-head(circuitscape_taxa)
-nrow(circuitscape_taxa)
-write_csv(circuitscape_taxa, file.path(groupingspath, "circuitscape_taxa.csv"))
+head(preclustered_isolation_taxa)
+nrow(preclustered_isolation_taxa)
+
+####################################################################################
+# Main CSV output
+
+# Write csv for all catagorized taxa
+categorised_taxa <- left_join(precategorized_taxa, preclustered_isolation_taxa, by="ala_search_term")
+write_csv(catagorized_taxa, file.path(groupingspath, "catagorized_taxa.csv"))
+
+####################################################################################
+# Circuitscape/isolation by resistance output
+
+# Taxa that we don't need to process - these have a lot of preclusters
+id <- which(num_clusters >= MAX_CLUSTERS)
+preclustered_isolation_taxa$risk[id] <- "abundant"
+preclustered_isolation_taxa$filter_category[id] <- "many_clusters"  
+
+# Write csv for taxa that we need to process with circuitscape
+isolation_by_resistance_taxa <- filter(preclustered_isolation_taxa, num_clusters < MAX_CLUSTERS, filter_category != "failed")
+head(isolation_by_resistance_taxa)
+nrow(isolation_by_resistance_taxa)
+write_csv(isolation_by_resistance_taxa, file.path(groupingspath, "isolation_by_resistance_taxa.csv"))
 
 # Download and write raster files for circuitscape resistance models
-if (nrow(circuitscape_taxa) > 0) {
-  prepare_resistance_files(circuitscape_taxa, taxapath)
+if (nrow(isolation_by_resistance_taxa) > 0) {
+  prepare_resistance_files(isolation_by_resistance_taxa, taxapath)
 }

@@ -1,45 +1,45 @@
 
 # Main method called from scripts 
 
-# Get observation data, cluster it into numbered groups, and write to 
+# Get observation data, precluster it into numbered groups, and write to 
 # both csv and raster files.
 process_observations <- function(taxa, mask_layer, taxapath, force_download=FALSE, error=FALSE) {
-  clustered_taxa <- add_column(taxa, num_clusters = 0, error = "") 
+  preclustered_taxa <- add_column(taxa, num_clusters = 0, error = "") 
   num_clusters <- 0
-  for (i in 1:nrow(clustered_taxa)) {
-    taxon <- clustered_taxa[i, ] 
+  for (i in 1:nrow(preclustered_taxa)) {
+    taxon <- preclustered_taxa[i, ] 
     cat("\nTaxon: ", taxon$ala_search_term, "\n")
     # Try-catch-finally block to catch any errors that 
     # happen for Individual taxa
     if (error) {
       obs <- load_or_dowload_obs(taxon, taxapath, force_download) %>%
         filter_observations(taxon) %>%
-        cluster_observations(taxon) 
-      # Create rasters with numbered clustered observations
-      write_cluster_rasters(obs, taxon, mask_layer, taxapath)
-      clustered_taxa[i, "num_clusters"] <- max(obs$cluster)
+        precluster_observations(taxon) 
+       # Create rasters with numbered preclustered observations
+      write_precluster_rasters(obs, taxon, mask_layer, taxapath)
+      preclustered_taxa[i, "num_clusters"] <- max(obs$cluster)
     } else {
       out <- tryCatch({
-        # Download, filter and cluster observation records
+        # Download, filter and precluster observation records
         obs <- load_or_dowload_obs(taxon, taxapath, force_download) %>%
           filter_observations(taxon) %>%
-          cluster_observations(taxon)
-        # Create rasters with numbered clustered observations
-        write_cluster_rasters(obs, taxon, mask_layer, taxapath)
+          precluster_observations(taxon)
+        # Create rasters with numbered preclustered observations
+        write_precluster_rasters(obs, taxon, mask_layer, taxapath)
 
-        list("", max(obs$cluster), "unknown")
+        list("", max(obs$cluster), obs$filter_category)
       }, error = function(e) {
         error_without_linebreaks <- gsub("[\r\n]", "", e)
         # Return error for debugging later
         list(error_without_linebreaks, 0, "failed")
       })
       # Add portential error messages, cluser number, and risk category to data.
-      clustered_taxa[i, "error"] <- paste(out[1])
-      clustered_taxa[i, "num_clusters"] <- out[2]
-      clustered_taxa[i, "risk"] <- out[3]
+      preclustered_taxa[i, "error"] <- paste(out[1])
+      preclustered_taxa[i, "num_clusters"] <- out[2]
+      preclustered_taxa[i, "filter_category"] <- out[3]
     }
   }
-  return(clustered_taxa)
+  return(preclustered_taxa)
 }
 
 # Retrieving observation data from ALA ######################################################
@@ -116,40 +116,40 @@ remove_location_duplicates <- function(obs) {
 
 # Clustering observation data ######################################################
 
-# Categorise clusters and add clusters column to dataframe
-cluster_observations <- function(obs, taxon) {
-    clustered_obs <- obs %>%
-      add_euclidan_coords() %>%
-      add_clusters(taxon$epsilon)
+# Categorise preclusters and add preclusters column to dataframe
+precluster_observations <- function(obs, taxon) {
+  obs %>%
+    add_euclidan_coords() %>%
+    add_clusters(taxon$epsilon)
 }
 
 # Add transformed coordinates "x" an "y" for accurate distance calculations
 add_euclidan_coords <- function(obs) {
-    sf::st_as_sf(obs, coords = c("decimalLongitude", "decimalLatitude"), crs = LATLON_EPSG) %>% 
-        sf::st_transform(crs = METRIC_EPSG) %>% 
-        mutate(x = sf::st_coordinates(.)[,1], y = sf::st_coordinates(.)[,2]) %>% 
-        sf::st_drop_geometry()
+  sf::st_as_sf(obs, coords = c("decimalLongitude", "decimalLatitude"), crs = LATLON_EPSG) %>% 
+    sf::st_transform(crs = METRIC_EPSG) %>% 
+    mutate(x = sf::st_coordinates(.)[,1], y = sf::st_coordinates(.)[,2]) %>% 
+    sf::st_drop_geometry()
 }
 
-# Scan clusters and add cluster index to observations
+# Scan preclusters and add precluster index to observations
 add_clusters <- function(obs, eps) {
-  clusters <- fpc::dbscan(obs[, c("x", "y")], eps = eps * 1000, MinPts = 3)
-  mutate(obs, cluster = clusters$cluster)
+  preclusters <- fpc::dbscan(obs[, c("x", "y")], eps = eps * 1000, MinPts = 3)
+  mutate(obs, precluster = preclusters$precluster)
 }
 
 
 # Writing observation data ######################################################
 
-# Write the clustered and orphan observations to raster files
+# Write the preclustered and orphan observations to raster files
 write_cluster_rasters <- function(obs, taxon, mask_layer, taxapath) {
   taxonpath <- taxon_path(taxon, taxapath)
   shapes <- sf::st_as_sf(obs, coords = c("x", "y"), crs = METRIC_EPSG)
   scaled_eps <- taxon$eps * 1000 / 1.9
 
-  # Create a full-sized raster for clusters
-  clustered <- buffer_clustered(shapes, scaled_eps)
-  cat("Clusters:", nrow(clustered), "\n")
-  cluster_rast <- shape_to_raster(clustered, taxon, mask_layer, taxonpath)
+  # Create a full-sized raster for preclusters
+  preclustered <- buffer_preclustered(shapes, scaled_eps)
+  cat("Clusters:", nrow(preclustered), "\n")
+  precluster_rast <- shape_to_raster(preclustered, taxon, mask_layer, taxonpath)
     
   # Create a full-sized raster for orphans
   orphans <- buffer_orphans(shapes, scaled_eps)
@@ -158,11 +158,11 @@ write_cluster_rasters <- function(obs, taxon, mask_layer, taxapath) {
 
 
   # Make a crop template by trimming the empty values from a
-  # combined cluster/orphan raster, with some added padding.
+  # combined precluster/orphan raster, with some added padding.
   crop_rast = terra::merge(cluster_rast, orphan_rast) %>% trim(padding=0)
 
   # Crop and write rasters
-  cluster_filename <- file.path(taxonpath, "clusters.tif")
+  precluster_filename <- file.path(taxonpath, "clusters.tif")
   orphan_filename <- file.path(taxonpath, "short_circuit.tif")
   crop(cluster_rast, crop_rast, filename=cluster_filename, overwrite=TRUE)
   crop(orphan_rast, crop_rast, filename=orphan_filename, overwrite=TRUE)
@@ -170,15 +170,15 @@ write_cluster_rasters <- function(obs, taxon, mask_layer, taxapath) {
   return(c(cluster_filename, orphan_filename))
 }
 
-# Add buffer around clusters
-buffer_clustered <- function(obs, scaled_eps) {
-  dplyr::filter(obs, cluster != 0) %>% 
+# Add buffer around preclusters
+buffer_preclustered <- function(obs, scaled_eps) {
+  dplyr::filter(obs, precluster != 0) %>% 
     buffer_obs(scaled_eps)
 }
 
 # Add buffer around orphans
 buffer_orphans <- function(shapes, scaled_eps) {
-  dplyr::filter(shapes, cluster == 0) %>% 
+  dplyr::filter(shapes, precluster == 0) %>% 
     buffer_obs(scaled_eps)
 }
 

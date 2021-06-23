@@ -18,10 +18,13 @@ precategorize_risk <- function(taxa) {
 precategorize_chunk <- function(taxa) {
    taxa %>% add_count_cols() %>%
      add_risk_col() %>%
-     label_high_count() %>%
-     label_low_count() # %>%
+     label_few_observations() %>%
+     label_many_observations() %>%
+     label_not_assessed() %>%
+     label_isolation_by_resistance() %>%
+     label_isolation_by_distance() %>%
      # label_low_regional_relevance() %>%
-     # label_data_deficient()
+     identity
 }
 
 # ALA queries #############################################################
@@ -60,7 +63,7 @@ get_all_counts <- function(taxa) {
 
 # Add a column that classifies risk. Initially "unknown".
 add_risk_col <- function(taxa) {
-  taxa$risk <- rep("unknown", length(taxa$ala_search_term))
+  taxa$risk <- rep(NA, length(taxa$ala_search_term))
   return(taxa)
 }
 
@@ -74,21 +77,40 @@ add_count_cols <- function(taxa) {
 }
 
 # Label very common species as "abundant"
-label_high_count <- function(taxa) {
-  taxa$risk[taxa$state_count > MAXCOUNT] <- "abundant"
+label_many_observations <- function(taxa) {
+  id <- which(taxa$state_count > MAXCOUNT)
+  taxa$risk[id] <- "abundant"
+  taxa$filter_category[id] <- "many_observations"
   return(taxa)
 }
 
 # Label very rare species as "rare"
-label_low_count <- function(taxa) {
-  taxa$risk[taxa$state_count < MINCOUNT] <- "rare"
+label_few_observations <- function(taxa) {
+  id <- which(taxa$state_count < MINCOUNT)
+  taxa$risk[id] <- "rare"
+  taxa$filter_category[id] <- "few_observations"
   return(taxa)
 }
 
 # Label species not relevent to STATE e.g. Victoria
 label_low_regional_relevance <- function(taxa) {
   # TODO: is the proportion enough?
-  taxa$risk[(taxa$state_count / taxa$count) < MINPROPINSTATE] <- paste0("more common outside", STATE) 
+  id <- which((taxa$state_count / taxa$count) < MINPROPINSTATE)
+  taxa$risk[id] <- "widespread"
+  taxa$filter_category[id] <- "low_proportion_in_state"
+}
+
+label_not_assessed <- function(taxa) {
+  taxa$risk[taxa$assess != "ALA"] <- "not_assessed"
+  taxa$filter_category[taxa$assess != "ALA"] <- "not_ALA_taxon"
+}
+
+label_isolation_by_distance <- function(taxa) {
+  taxa$filter_category[is.na(taxa$filter_category) && taxa$disperse_model == "Distance"] <- "isolation_by_distance"
+}
+
+label_isolation_by_resistance <- function(taxa) {
+  taxa$filter_category[is.na(taxa$filter_category) && taxa$disperse_model == "Habitat"] <- "isolation_by_resistance"
 }
 
 # Label species for which there is not enough data.
