@@ -62,8 +62,8 @@ use_generic_hdm <- function(taxon, taxapath) {
 }
 
 crop_resistance <- function(resistance_raster, taxon, taxapath) {
-  crop_filename <- file.path(taxon_path(taxon, taxapath), "clusters.tif")
+  crop_filename <- file.path(taxon_path(taxon, taxapath), "preclusters.tif")
   crop_template <- terra::rast(crop_filename)
-  # Crop the resistance_raster to match "clusters.tif"
+  # Crop the resistance_raster to match "preclusters.tif"
   terra::crop(resistance_raster, crop_template)
 }

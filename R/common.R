@@ -1,11 +1,9 @@
 library(galah)
-library(fasterize)
 library(fpc)
 library(lubridate)
 library(sf)
 library(terra)
 library(tidyverse) # includes dplyr & readr
-library(fs)
 
 # metric reference system epsg code
 METRIC_EPSG <- 3111
