@@ -7,6 +7,11 @@ variable "project" {
   default = "genetic-risk-index" 
 }
 
+variable "project_repo" {
+  type = string
+  default = "https://github.com/cesaraustralia/GeneticRiskIndex"
+}
+
 variable "r_instance_type" {
   type = string
   default = "t2.small"
@@ -59,10 +64,10 @@ variable "ami" {
 
 variable "julia_cpus" {
   type = number
-  default = 4
+  default = 1
 }
 
-variable "julia_instance_memory" {
+variable "julia_memory" {
   type = number
-  default = 8192
+  default = 4096
 }

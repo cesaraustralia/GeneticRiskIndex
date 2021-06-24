@@ -7,7 +7,7 @@ source("fire_severity.R")
 
 # In case downloads run out of time
 options(timeout=500)
-datapath <- file.path(path_home(), "data")
+datapath <- file.path(fs::path_home(), "data")
 taxapath <- file.path(datapath, "taxa")
 groupingspath <- file.path(datapath, "groupings")
 dir.create(taxapath, recursive = TRUE)
@@ -107,3 +107,10 @@ write_csv(isolation_by_resistance_taxa, file.path(groupingspath, "isolation_by_r
 if (nrow(isolation_by_resistance_taxa) > 0) {
   prepare_resistance_files(isolation_by_resistance_taxa, taxapath)
 }
+
+# Write circuitscape task list - these are just
+# ala_search_term with underscores instead of spaces.
+underscored <- gsub(" ", "_", isolation_by_resistance_taxa$ala_search_term)
+circuitscape_tasks_file <- file(file.path(datapath, "circuitscape_tasks.txt"))
+writeLines(underscored, circuitscape_tasks_file)
+close(circuitscape_tasks_file)

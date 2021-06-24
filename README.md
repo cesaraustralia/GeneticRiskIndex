@@ -14,58 +14,16 @@ and Julia using [Ansible playbooks](https://docs.ansible.com/ansible/latest/user
 
 Software needed to run these scripts locally:
 - [terraform](https://www.terraform.io/)
-- [ansible](https://www.ansible.com/)
 - [aws cli](https://aws.amazon.com/cli/)
 
 On linux and mac these can be installed with most package managers (e.g. brew,
 apt, pacman) and run from the command line. On windows ansible will need
 [cygwin](https://www.cygwin.com/), while terraform has a [windows
-installer](https://www.terraform.io/downloads.html). It is recomended these
+installer](https://www.terraform.io/downloads.html). It is recommended these
 scripts are run from linux, either a local machine, a vm or a server.
 
-Once terraform and ansible are installed, clone or download this repository to
+Once terraform and aws-cli are installed, clone or download this repository to
 get started.
-
-
-## R and Julia server images
-
-These scripts generate images for ubutu servers using ansible playbooks. One
-contains R binaries and required packages, the other Julia binaries and
-pre-installed packages for this project.
-
-These servers can be generated locally in a virtual machine, for manual use of
-scripts, using [Vagrant](https://www.vagrantup.com/).
-
-To generate the virtual machine, go to the `ansible/julia` or `ansible/R`
-folders and run:
-
-```bash
-vagrant up
-```
-
-To ssh into them, run:
-
-```bash
-vagrant ssh
-```
-
-You will be logged into a fully functioning system with all software and scripts
-needed for this project already installed.
-
-
-# AWS credentials
-
-aws cli handles storing your aws credentials in your system. 
-Terraform will use these to create instances in your account.
-
-
-Run:
-
-```
-aws configure
-```
-
-to set them, and follow the prompt.
 
 ## Running Tasks with Terraform
 
@@ -76,19 +34,16 @@ from the `terraform.tfvars.example` and filled in with your AWS credentials.
 
 The terraform run is broken into 3 steps. 
 
-1. Run an R server to download and prefilter taxon data, and prepare list of
-species that need habitat resistance modelling using Ciscuitscape in Julia.
-Simultaneously prepare an aws AMI to run Julia and Circuitscape, with this
-project pre-installed and instantiated.
+1. Set up aws infrastructure for the project.
 
-2. Start [AWS Fargate](https://aws.amazon.com/fargate) tasks (using the
-predefined julia AMI) for each taxon that requires a habitat resistance
-simulation. This is by far the largest use of server resources, spinning up
-hundreds of containers.
+2. Run an R container to download and prefilter taxon data.
 
-3. Run another R instance to finalise risk calculations from data returned by
-Circuitscape tasks.
+3. Start AWS Batch tasks (using julia docker container) for each taxon that
+requires a habitat resistance simulation. This is by far the largest use of
+server resources, and may be hundreds of containers.
 
+4. Run another task in an R container to finalise risk calculations from data
+returned by Circuitscape tasks.
 
 **⚠  WARNING terraform can start hundreds of AWS containers** 
 
@@ -98,15 +53,30 @@ csv returned from step 1 and passed to step 2. The number of taxon rows is the n
 These variables also have direct effect of the cost of AWS servers. 
 Larger numbers are more expensive:
 
+
+# Instructions
+
+## Set AWS credentials
+
+`aws cli` handles storing your aws credentials in your system. 
+Terraform will use these to create instances in your account, and we 
+will use `aws cli` from the command line
+
+Run:
+
 ```
-r_instance_type = "t2.micro"
-julia_cpus = 4
-julia_instance_memory = 4096
+aws configure
 ```
+
+and follow the prompt.
+
+
+# Set up infrastructure
 
 To simulate running the tasks, from the command line run:
 
 ```
+cd terraform/setup
 terraform plan
 ```
 
@@ -116,9 +86,37 @@ To run them, run:
 terraform apply
 ```
 
+And answer 'yes' to run. This should build all the required infrastructure.
+
+Then we can run the R task
+
+```
+aws submit-job --job-name '$(terraform output prefilter)` --job-queue '$(terraform output queue)` --job-definition $(terraform output prefilter)
+```
+
+To back-up data from the run to the amazon s3 bucket:
+
+```
+aws datasync start-task-execution --task-arn '$(terraform output efs-data-backup-arn)`
+```
+
+Then we can run the Circuitscape batch jobs returned by the prefilter task
+
+```
+aws submit-job --job-name '$(terraform output circuitscape)` --job-queue '$(terraform output queue)` --job-definition $(terraform output circuitscape)
+```
+
+Backup again:
+
+```
+aws datasync start-task-execution --task-arn '$(terraform output efs-data-backup-arn)`
+```
+
+Check the s3 bucket in the web interface to be sure the data is available.
+
+
 To finally destroy the R instance, run:
+
 ```
 terraform destroy
 ```
-
-The Fargate Julia/Circuitscape tasks will close themselves on completion.
