@@ -1,5 +1,6 @@
 using Circuitscape, Pkg
 
+# Use command line argumentsa for job_taxon and datadir
 job_taxon = ARGS[1] 
 datadir = ARGS[2] 
 
