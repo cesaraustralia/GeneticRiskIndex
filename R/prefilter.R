@@ -1,5 +1,5 @@
 source("common.R")
-source("prefilter.R")
+source("categorize.R")
 source("observations.R")
 source("resistance.R")
 source("distance.R")
