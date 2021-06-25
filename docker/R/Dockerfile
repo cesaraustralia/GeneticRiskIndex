@@ -6,11 +6,11 @@ FROM rocker/r-base
 ## install debian packages
 RUN apt-get update -qq && apt-get -y --no-install-recommends install \
     # dependency
+    git \
     libssh2-1-dev \
     libcurl4-openssl-dev \
     libssl-dev \
     libgit2-dev \
-
     libgdal-dev \
     libgeos-dev \
     libgeotiff-dev \
@@ -30,5 +30,7 @@ RUN apt-get update && \
 RUN Rscript -e 'install.packages(c("tidyverse","lubridate","galah","fpc"))'
 RUN Rscript -e 'install.packages(c("rgdal","rgeos","sf","terra","tmap"))'
 
+RUN git clone https://github.com/cesaraustralia/GeneticRiskIndex
+
 WORKDIR GeneticRiskIndex/R
-CMD ["bash"]
+CMD ["/bin/bash"]
