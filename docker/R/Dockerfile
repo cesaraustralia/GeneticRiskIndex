@@ -30,7 +30,7 @@ RUN apt-get update && \
 RUN Rscript -e 'install.packages(c("tidyverse","lubridate","galah","fpc"))'
 RUN Rscript -e 'install.packages(c("rgdal","rgeos","sf","terra","tmap"))'
 
-RUN git clone https://github.com/cesaraustralia/GeneticRiskIndex
+RUN git clone https://github.com/cesaraustralia/GeneticRiskIndex /project/GeneticRiskIndex
 
-WORKDIR GeneticRiskIndex/R
+WORKDIR /project/GeneticRiskIndex/R
 CMD ["/bin/bash"]
