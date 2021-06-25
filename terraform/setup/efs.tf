@@ -48,3 +48,17 @@ resource "aws_datasync_location_efs" "efs-storage" {
     subnet_arn          = aws_subnet.subnet.arn
   }
 }
+
+resource "aws_datasync_task" "efs-data-backup" {
+  destination_location_arn = aws_datasync_location_s3.data.arn
+  name                     = "efs-data-backup"
+  source_location_arn      = aws_datasync_location_efs.efs-storage.arn
+  options {
+    bytes_per_second = -1
+  }
+}
+
+output "efs-datasync-arn" {
+  description = "arn for efs to s3 datasync task"
+  value = aws_datasync_location_efs.efs-storage.arn
+}

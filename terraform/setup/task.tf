@@ -23,11 +23,11 @@ resource "aws_iam_role_policy_attachment" "aws_batch_service_role" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSBatchServiceRole"
 }
 
-resource "aws_batch_compute_environment" "circuitscape" {
-  compute_environment_name = "circuitscape"
+resource "aws_batch_compute_environment" "fargate_environment" {
+  compute_environment_name = "${var.project}-compute-environment"
 
   compute_resources {
-    max_vcpus = 8
+    max_vcpus = 4
     security_group_ids = [
       aws_security_group.security.id
     ]
@@ -63,9 +63,8 @@ resource "aws_iam_role_policy_attachment" "task_execution_role_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-
-resource "aws_batch_job_definition" "circuitscape" {
-  name = "${var.project}_batch_job_definition"
+resource "aws_batch_job_definition" "prefilter" {
+  name = "${var.project}_prefilter"
   type = "container"
   platform_capabilities = [
     "FARGATE",
@@ -73,7 +72,39 @@ resource "aws_batch_job_definition" "circuitscape" {
 
   container_properties = <<CONTAINER_PROPERTIES
 {
-  "command": ["julia", "--project=~/GeneticRiskIndex/julia", "~/GeneticRiskIndex/julia/circuitscape.jl", "Ref::taxon_key"],
+  "command": ["Rscript", "sctript.R"],
+  "image": "${aws_ecr_repository.r-docker.repository_url}",
+  "fargatePlatformConfiguration": {
+    "platformVersion": "1.4.0"
+  },
+  "resourceRequirements": [
+    {"type": "VCPU", "value": "${var.julia_cpus}"},
+    {"type": "MEMORY", "value": "${var.julia_memory}"}
+  ],
+  "executionRoleArn": "${aws_iam_role.task_execution_role.arn}",
+  "volumes": [
+    {
+      "name": "efs",
+      "efsVolumeConfiguration": {
+        "fileSystemId": "${aws_efs_file_system.efs-storage.id}",
+        "rootDirectory": "/efs"
+      }
+    }
+  ]
+}
+CONTAINER_PROPERTIES
+}
+
+resource "aws_batch_job_definition" "circuitscape" {
+  name = "${var.project}_circuitscape"
+  type = "container"
+  platform_capabilities = [
+    "FARGATE",
+  ]
+
+  container_properties = <<CONTAINER_PROPERTIES
+{
+  "command": ["julia", "--project=.", "circuitscape.jl"],
   "image": "${aws_ecr_repository.julia-docker.repository_url}",
   "fargatePlatformConfiguration": {
     "platformVersion": "1.4.0"
@@ -87,7 +118,8 @@ resource "aws_batch_job_definition" "circuitscape" {
     {
       "name": "efs",
       "efsVolumeConfiguration": {
-        "fileSystemId": "${aws_efs_file_system.efs-storage.id}"
+        "fileSystemId": "${aws_efs_file_system.efs-storage.id}",
+        "rootDirectory": "/efs"
       }
     }
   ]
@@ -100,7 +132,7 @@ resource "aws_batch_job_queue" "queue" {
   state    = "ENABLED"
   priority = 1
   compute_environments = [
-    aws_batch_compute_environment.circuitscape.arn,
+    aws_batch_compute_environment.fargate_environment.arn,
   ]
 }
 

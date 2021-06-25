@@ -12,6 +12,11 @@ variable "project_repo" {
   default = "https://github.com/cesaraustralia/GeneticRiskIndex"
 }
 
+variable "s3_bucket" {
+  type = string
+  default = "genetic-risk-index-bucket"
+}
+
 variable "r_instance_type" {
   type = string
   default = "t2.small"
