@@ -16,9 +16,8 @@ localdir = joinpath(projectdir, "data")
 isdir(taxondir) || error("taxon directory $taxondir does not exist")
 
 # Symlink taxon data folder to this directory
-if !isdir(joinpath(projectdir, "data"))
-    symlink(taxondir, localdir, dir_target=true)
-end
+rm(localdir)
+symlink(taxondir, localdir, dir_target=true)
 
 # Run the model
 seconds_elapsed = @elapsed compute(joinpath(projectdir, "circuitscape_model.ini"))
