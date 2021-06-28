@@ -1,3 +1,0 @@
----
-
-julia_tarball_checksum: "{{ julia_tarball_checksums[julia_tarball] }}"

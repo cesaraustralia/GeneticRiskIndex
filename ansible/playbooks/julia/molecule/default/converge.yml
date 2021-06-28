@@ -1,7 +1,0 @@
----
-- name: Converge
-  hosts: all
-  tasks:
-    - name: "Include jan_matthis.julia"
-      include_role:
-        name: "jan_matthis.julia"
