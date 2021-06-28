@@ -22,21 +22,27 @@ MINCOUNT <- 50
 MAX_CLUSTERS <- 80
 MIN_CLUSTERS <- 1
 
-MINPROPINSTATE <- 0.1
-HABITAT_RASTER <- "sbv.tif"
-HABITAT_RASTER_PATH <- file.path(datapath, HABITAT_RASTER)
-RESISTANCE_RASTER <- "resistance.tif"
-FIRE_SEVERITY_RASTER_PATH <- file.path(datapath, "fire_severity.tif")
-TAXA_CSV_PATH <- file.path(datapath, "taxa.csv")
+BUCKET_URL = "https://genetic-risk-index-bucket.s3.ap-southeast-2.amazonaws.com/"
 
-FIRE_SEVERITY_RASTER_URL = "https://genetic-risk-index-bucket.s3.ap-southeast-2.amazonaws.com/fire_severity.tif"
-HABITAT_RASTER_URL = "https://genetic-risk-index-bucket.s3.ap-southeast-2.amazonaws.com/sbv.tif"
-TAXA_URL = "https://genetic-risk-index-bucket.s3.ap-southeast-2.amazonaws.com/taxa.csv"
+MINPROPINSTATE <- 0.1
+HABITAT_RASTER <- "habitat.tif"
+HABITAT_RASTER_PATH <- file.path(datapath, HABITAT_RASTER)
+HABITAT_RASTER_URL <- paste0(BUCKET_URL, HABITAT_RASTER)
+
+FIRE_SEVERITY_RASTER <- "fire_severity.tif"
+FIRE_SEVERITY_RASTER_PATH <- file.path(datapath, FIRE_SEVERITY_RASTER)
+FIRE_SEVERITY_RASTER_URL <- paste0(BUCKET_URL, FIRE_SEVERITY_RASTER_URL)
+
+BATCH_TAXA_CSV <- "batch_taxa.csv"
+BATCH_TAXA_CSV_PATH <- file.path(datapath, BATCH_TAXA_CSV)
+BATCH_TAXA_URL <- paste0(BUCKET_URL, BATCH_TAXA_CSV)
+
+RESISTANCE_RASTER <- "resistance.tif"
 
 # Download
 maybe_download(FIRE_SEVERITY_RASTER_URL, FIRE_SEVERITY_RASTER_PATH)
 maybe_download(HABITAT_RASTER_URL, HABITAT_RASTER_PATH)
-maybe_download(TAXA_URL, TAXA_CSV_PATH)
+maybe_download(BATCH_TAXA_URL, TAXA_CSV_PATH)
 
 # Plot rasters
 # HABITAT_RASTER_PATH %>% terra::rast() %>% plot
@@ -52,7 +58,7 @@ terra::crs(mask_layer) < as.character(sp::CRS(paste0("+init=epsg:", METRIC_EPSG)
 # plot(mask_layer)
 
 # Load main taxa dataframe from csv
-taxa <- read.csv(TAXA_CSV_PATH, header = TRUE)
+taxa <- read.csv(BATCH_TAXA_CSV_PATH, header = TRUE)
 head(taxa)
 
 
