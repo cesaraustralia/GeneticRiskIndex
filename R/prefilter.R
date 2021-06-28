@@ -109,11 +109,11 @@ nrow(isolation_by_resistance_taxa)
 isolation_by_resistance_taxa$error
 write_csv(isolation_by_resistance_taxa, file.path(groupingspath, "isolation_by_resistance_taxa.csv"))
 
-# Write as a single column task-list
-task_file <- file(file.path(datapath, "batch_tasks.txt"))
+# Write as a single column job-list
+job_file <- file(file.path(datapath, "batch_jobs.txt"))
 underscored <- gsub(" ", "_", isolation_by_resistance_taxa$ala_search_term)
-writeLines(underscored, task_file)
-close(task_file)
+writeLines(underscored, job_file)
+close(job_file)
 
 # Download and write raster files for circuitscape resistance models
 if (nrow(isolation_by_resistance_taxa) > 0) {
