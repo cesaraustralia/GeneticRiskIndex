@@ -30,7 +30,10 @@ RUN apt-get update && \
 RUN Rscript -e 'install.packages(c("tidyverse","lubridate","galah","fpc"))'
 RUN Rscript -e 'install.packages(c("rgdal","rgeos","sf","terra","tmap"))'
 
+Run echo "rebuild the cache after this x2"
 RUN git clone https://github.com/cesaraustralia/GeneticRiskIndex /project/GeneticRiskIndex
+RUN chown -R docker /project/GeneticRiskIndex
 
 WORKDIR /project/GeneticRiskIndex/R
+USER docker
 CMD ["/bin/bash"]
