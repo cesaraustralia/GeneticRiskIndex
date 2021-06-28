@@ -18,7 +18,7 @@ GALAH_MAXROWS <- 800
 # Get the directory path for files relating to a specific taxon
 taxon_path <- function(taxon, taxapath) {
   # We use underscores in the directory name
-  underscored <- gsub(" ", "_", taxon$delwp_taxon)[[1]]
+  underscored <- gsub(" ", "_", taxon$ala_search_term)[[1]]
   taxonpath <- file.path(taxapath, underscored)
   # Create the directory if it doesn't exist yet
   dir.create(taxonpath, recursive = TRUE)
