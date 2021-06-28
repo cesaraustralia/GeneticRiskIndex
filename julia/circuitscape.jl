@@ -1,7 +1,7 @@
 using Circuitscape, Pkg
 
 # Use command line argumentsa for job_taxon and datadir
-job_id = ARG[1] 
+job_id = ARGS[1] 
 datadir = joinpath(homedir(), "data")
 
 job_list = readlines(joinpath(datadir, "batch_jobs.txt"))
