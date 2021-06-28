@@ -1,14 +1,16 @@
 using Circuitscape, Pkg
 
 # Use command line argumentsa for job_taxon and datadir
-job_taxon = ARGS[1] 
-datadir = ARGS[2] 
+job_id = 1# ARG\[1] 
+datadir = "/home/raf/data/" #ARGS[2] 
 
-@show job_taxon
+job_list = readlines(joinpath(datadir, "batch_jobs.txt"))
+job = job_list[job_id]
+println("Job taxon: $job")
 
 projectdir = dirname(Pkg.project().path)
 
-taxondir = joinpath(datadir, "taxa", job_taxon) 
+taxondir = joinpath(datadir, "taxa", job) 
 localdir = joinpath(projectdir, "data")
 
 isdir(taxondir) || error("taxon directory $taxondir does not exist")
@@ -22,7 +24,7 @@ end
 seconds_elapsed = @elapsed compute(joinpath(projectdir, "circuitscape_model.ini"))
 
 # Store the time taken to run it
-open("data/run_stats.csv", "w") do io
+open("data/job_stats.csv", "w") do io
     println(io, "threads, seconds_elapsed")
     println(io, string(Threads.nthreads(), ", ", seconds_elapsed))
 end
