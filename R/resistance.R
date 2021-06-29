@@ -1,5 +1,4 @@
 
-
 # Main method to call from scripts
 # Set up files for use by Circuitscape.jl later on
 # taxa is a dataframe, taxonpath is the directory
@@ -44,18 +43,6 @@ download_hdm <- function(taxon, taxapath) {
     habitat_to_resistance() %>% 
     crop_resistance(taxon, taxapath)
   terra::writeRaster(resistance_raster, filename=resistance_filename, overwrite=TRUE)
-}
-
-
-add_cell_counts <- function(resistance_raster) {
-  total_cells <- count(resistance_raster)
-  taxonpath = taxon_path(taxon)
-  orphans_rast <- rast(file.path(taxonpath, "orphans.tif"))
-  preclusters_rast <- rast(file.path(taxonpath, "preclusters.tif"))
-  prop_orphans <- count(orphans_rast) / total_cells
-  prop_preclusters <- count(preclusters_rast) / total_cells
-  mutate(taxa, prop_preclusters = prop_preclusters, prop_orphans = prop_orphans)
-  taxon %>% add_cell_counts(resistance_raster)
 }
 
 # Invert percentage from % habitat quality to % movement resistance

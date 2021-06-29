@@ -5,6 +5,19 @@ source("resistance.R")
 source("distance.R")
 source("fire_severity.R")
 
+# Run parameters
+# TODO: put these in a toml (?) config file
+MAXCOUNT <- 10000
+MINCOUNT <- 50
+MAX_CLUSTERS <- 80
+MIN_CLUSTERS <- 1
+MINPROPINSTATE <- 0.1
+BUCKET_URL = "https://genetic-risk-index-bucket.s3.ap-southeast-2.amazonaws.com/"
+ala_email <- "rafaelschouten@gmail.com"
+STATE <- "Victoria"
+TIMESPAN <- c(1960:2021)
+BASIS <- "HumanObservation"
+
 # In case downloads run out of time
 options(timeout=500)
 datapath <- file.path(path_home(), "data")
@@ -12,19 +25,8 @@ taxapath <- file.path(datapath, "taxa")
 groupingspath <- file.path(datapath, "groupings")
 dir.create(taxapath, recursive = TRUE)
 dir.create(groupingspath, recursive = TRUE)
-ala_email <- "rafaelschouten@gmail.com"
 ala_config(email=ala_email)
 
-# Taxa prefiltering constants
-# TODO: make this a dict to pass to prefilter_taxa() ?
-MAXCOUNT <- 10000
-MINCOUNT <- 50
-MAX_CLUSTERS <- 80
-MIN_CLUSTERS <- 1
-
-BUCKET_URL = "https://genetic-risk-index-bucket.s3.ap-southeast-2.amazonaws.com/"
-
-MINPROPINSTATE <- 0.1
 HABITAT_RASTER <- "habitat.tif"
 HABITAT_RASTER_PATH <- file.path(datapath, HABITAT_RASTER)
 HABITAT_RASTER_URL <- paste0(BUCKET_URL, HABITAT_RASTER)
@@ -47,11 +49,6 @@ maybe_download(BATCH_TAXA_URL, BATCH_TAXA_CSV_PATH)
 # Plot rasters
 # HABITAT_RASTER_PATH %>% terra::rast() %>% plot
 # FIRE_SEVERITY_RASTER_PATH %>% terra::rast() %>% plot
-
-# Observation prefiltering constants
-STATE <- "Victoria"
-TIMESPAN <- c(1960:2021)
-BASIS <- "HumanObservation"
 
 mask_layer <- terra::rast(HABITAT_RASTER_PATH) < 0
 terra::crs(mask_layer) < as.character(sp::CRS(paste0("+init=epsg:", METRIC_EPSG)))

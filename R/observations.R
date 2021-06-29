@@ -4,7 +4,12 @@
 # Get observation data, precluster it into numbered groups, and write to 
 # both csv and raster files.
 process_observations <- function(taxa, mask_layer, taxapath, force_download=FALSE, error=FALSE) {
-  preclustered_taxa <- add_column(taxa, num_preclusters = 0, error = NA) 
+  preclustered_taxa <- add_column(taxa, 
+    num_preclusters = 0, 
+    precluster_cell_count = 0, 
+    orphan_cell_count = 0, 
+    error = NA
+  ) 
   num_preclusters <- 0
   for (i in 1:nrow(preclustered_taxa)) {
     taxon <- preclustered_taxa[i, ] 
@@ -19,7 +24,7 @@ process_observations <- function(taxa, mask_layer, taxapath, force_download=FALS
       out <- tryCatch({
         # Download, filter and precluster observation records
         obs <- load_filter_write(taxon, taxapath, force_download)
-        list(NA, max(obs$precluster), obs$filter_category)
+        list(NA, max(obs$precluster), obs$filter_category, sum(obs$cell_counts))
       }, error = function(e) {
         error_without_linebreaks <- gsub("[\r\n]", " ", e)
         # Return error for debugging later
@@ -29,6 +34,8 @@ process_observations <- function(taxa, mask_layer, taxapath, force_download=FALS
       preclustered_taxa[i, "error"] <- paste(out[1])
       preclustered_taxa[i, "num_preclusters"] <- out[2]
       preclustered_taxa[i, "filter_category"] <- out[3]
+      preclustered_taxa[i, "precluster_cell_count"] <- out[4]
+      preclustered_taxa[i, "orphan_cell_count"] <- out[5]
     }
   }
   preclustered_taxa %>%
@@ -44,7 +51,9 @@ load_filter_write <- function(taxon, taxapath, force_download) {
   # Create rasters with numbered preclustered observations
   # If there are any clusters
   if (max(obs$precluster) != 0) {
-    write_precluster_rasters(obs, taxon, mask_layer, taxapath)
+    write_precluster(obs, taxon, mask_layer, taxapath)
+  } else {
+    preclustered_taxa <- add_column(taxa, cell_count = 0) 
   }
   return(obs)
 }
@@ -122,8 +131,7 @@ filter_observations <- function(obs, taxon) {
 
 # Remove subspecies observations when we are working with the
 # whole species, as subspecies will be duplicates ??
-# TODO: Do we need this? records are filtered by location
-# duplication anyway
+# TODO: Do we need this? records are filtered by location duplication anyway
 maybe_remove_subspecies <- function(obs, taxon) {
   if (taxon$taxon_level == "Base") {
     return(dplyr::filter(obs, scientificName == taxon$ala_search_term))
@@ -172,7 +180,7 @@ scan_clusters <- function(obs, eps) {
 # Writing observation data ######################################################
 
 # Write the preclustered and orphan observations to raster files
-write_precluster_rasters <- function(obs, taxon, mask_layer, taxapath) {
+write_precluster <- function(obs, taxon, mask_layer, taxapath) {
   taxonpath <- taxon_path(taxon, taxapath)
   shapes <- sf::st_as_sf(obs, coords = c("x", "y"), crs = METRIC_EPSG)
   scaled_eps <- taxon$eps * 1000 / 1.9
@@ -181,17 +189,22 @@ write_precluster_rasters <- function(obs, taxon, mask_layer, taxapath) {
   preclustered <- buffer_preclustered(shapes, scaled_eps)
   cat("Preclusters:", nrow(preclustered), "\n")
   precluster_rast <- shape_to_raster(preclustered, taxon, mask_layer, taxonpath)
+  # TODO: mutate to add cell counts for each: How to summaries this to the main taxa db?
+  num_preclucters <- count(preclusters_rast)
+  pixel_hist <- freq(preclusters_rast)
+  mutate(preclustered, cell_count = lapply(1:num_preclucters, count_matching, preclusters_rast))
+  write_csv(preclustered, file.path(taxapath, "preclusters.csv")
     
   # Create a full-sized raster for orphans
   orphans <- buffer_orphans(shapes, scaled_eps)
   cat("Orphans:", nrow(orphans), "\n")
   orphan_rast <- shape_to_raster(orphans, taxon, mask_layer, taxonpath)
-
+  write_csv(orphans, file.path(taxapath, "orphans.csv")
 
   # Make a crop template by trimming the empty values from a
   # combined precluster/orphan raster, with some added padding.
   crop_rast = terra::merge(precluster_rast, orphan_rast) %>% 
-      trim(padding=0)
+    trim(padding=0)
 
   # Crop and write rasters
   precluster_filename <- file.path(taxonpath, "preclusters.tif")
@@ -205,6 +218,19 @@ write_precluster_rasters <- function(obs, taxon, mask_layer, taxapath) {
 
   return(c(precluster_filename, orphan_filename))
 }
+
+# Add the cell counts
+add_cell_counts <- function() {
+  taxonpath = taxon_path(taxon)
+  orphans_rast <- rast(file.path(taxonpath, "orphans.tif"))
+  preclusters_rast <- rast(file.path(taxonpath, "preclusters.tif"))
+  orphan_cells <- count(orphans_rast)
+  preclusters_cells <- count(preclusters_rast)
+  mutate(taxa, prop_preclusters = prop_preclusters, prop_orphans = prop_orphans)
+  npreclusters <- max(preclusters_rast)
+  taxon %>% add_cell_counts(resistance_raster)
+}
+
 
 # Add buffer around preclusters
 buffer_preclustered <- function(obs, scaled_eps) {
