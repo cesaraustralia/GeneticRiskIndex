@@ -1,4 +1,0 @@
-julia_cpus = 4
-julia_instance_memory = 2048
-aws_credentials = "/your/homedir/.aws/credentials"
-resistance_taxa_csv = "../../data/resistance_taxa.csv"
