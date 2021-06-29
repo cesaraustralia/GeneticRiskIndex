@@ -20,7 +20,7 @@
 #   policy = "${data.aws_iam_policy_document.dockerbuild_policy.json}"
 # }
 
-resource "aws_ecr_repository" "r-docker" {
+resource "aws_ecr_repository" "r_docker" {
   name = "${var.project}-r"
   image_tag_mutability = "MUTABLE"
   image_scanning_configuration {
@@ -28,7 +28,7 @@ resource "aws_ecr_repository" "r-docker" {
   }
 }
 
-resource "aws_ecr_repository" "julia-docker" {
+resource "aws_ecr_repository" "julia_docker" {
   name = "${var.project}-julia"
   image_tag_mutability = "MUTABLE"
   image_scanning_configuration {
@@ -36,22 +36,28 @@ resource "aws_ecr_repository" "julia-docker" {
   }
 }
 
-resource "null_resource" "local_docker_build" {
-  depends_on = [
-    aws_ecr_repository.r-docker,
-    aws_ecr_repository.julia-docker,
-  ]
+resource "null_resource" "local_r_docker_build" {
+  depends_on = [aws_ecr_repository.r_docker]
   provisioner "local-exec" {
     command = <<EOF
       $(aws ecr get-login --registry-ids 364518226878  --no-include-email)
       cd ../../docker/R
       sudo docker build -t ${var.project}-r .
-      sudo docker tag ${var.project}-r:latest ${aws_ecr_repository.julia-docker.repository_url}:latest
-      sudo docker push ${aws_ecr_repository.r-docker.repository_url}
+      sudo docker tag ${var.project}-r:latest ${aws_ecr_repository.julia_docker.repository_url}:latest
+      sudo docker push ${aws_ecr_repository.r_docker.repository_url}
+    EOF
+  }
+}
+
+resource "null_resource" "local_julia_docker_build" {
+  depends_on = [aws_ecr_repository.julia_docker]
+  provisioner "local-exec" {
+    command = <<EOF
+      $(aws ecr get-login --registry-ids 364518226878  --no-include-email)
       cd ../../docker/julia
       sudo docker build -t ${var.project}-julia .
-      sudo docker tag ${var.project}-julia:latest ${aws_ecr_repository.julia-docker.repository_url}:latest
-      docker push ${aws_ecr_repository.julia-docker.repository_url}
+      sudo docker tag ${var.project}-julia:latest ${aws_ecr_repository.julia_docker.repository_url}:latest
+      docker push ${aws_ecr_repository.julia_docker.repository_url}
     EOF
   }
 }

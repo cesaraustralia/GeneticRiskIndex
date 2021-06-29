@@ -56,11 +56,12 @@ Larger numbers are more expensive:
 
 # Instructions
 
+
 ## Set AWS credentials
 
-`aws cli` handles storing your aws credentials in your system. 
+`aws cli` handles storing your aws credentials in your system.
 Terraform will use these to create instances in your account, and we 
-will use `aws cli` from the command line
+will use `aws cli` from the command line.
 
 Run:
 
@@ -71,39 +72,73 @@ aws configure
 and follow the prompt.
 
 
-# Set up infrastructure
+## Set up infrastructure
 
-To simulate running the tasks, from the command line run:
+To simulate setting up infrastructure, from the command line run:
 
 ```
 cd terraform/setup
 terraform plan
 ```
 
-To run them, run:
+To actually run them, run:
 
 ```
 terraform apply
 ```
 
-And answer 'yes' to run. This should build all the required infrastructure.
+And answer 'yes'. This should build all the required infrastructure.
 
-Then we can run the R task
+
+
+## Prefiltering
+
+We first need to upload the required `habitat.tif` and `fire_severity.tif` layers:
 
 ```
-aws submit-job --job-name '$(terraform output prefilter)` --job-queue '$(terraform output queue)` --job-definition $(terraform output prefilter)
+aws s3 cp sbv.tif s3://genetic-risk-index-bucket/habitat.tif
+aws s3 cp fire_severity.tif s3://genetic-risk-index-bucket/fire_severity.tif
 ```
 
-To back-up data from the run to the amazon s3 bucket:
+These only need to be uploaded once, unless you need to changed them. Then we
+can upload the csv containing the taxa we want to process in this batch:
+
+```
+aws s3 cp batch_taxa.csv s3://genetic-risk-index-bucket/batch_taxa.csv
+```
+
+This will likely be repeatedly uploaded to run lists of taxa, as it is unlikely
+the whole list will run successfully immediately.
+
+Then, trigger the job. We can get the ids of our jobs and job queue from
+terraform, so we don't have to track any of that manually:
+
+```
+aws submit-job --job-name prefilter --job-queue '$(terraform output queue)` --job-definition $(terraform output prefilter)
+```
+
+The name can be anything you like. To back-up data from the run to the amazon s3 bucket:
 
 ```
 aws datasync start-task-execution --task-arn '$(terraform output efs-data-backup-arn)`
 ```
 
-Then we can run the Circuitscape batch jobs returned by the prefilter task
+We can check that it worked:
 
 ```
-aws submit-job --job-name '$(terraform output circuitscape)` --job-queue '$(terraform output queue)` --job-definition $(terraform output circuitscape)
+aws s3 ls s3://genetic-risk-index-bucket/data
+```
+
+Or visit the s3 console page in a web browser:
+https://s3.console.aws.amazon.com/s3/buckets/genetic-risk-index-bucket
+
+Then we can run the Circuitscape batch jobs returned by the prefilter task
+
+
+## Run Circuitscape jobs
+
+```
+aws submit-job --job-name circuitscape --job-queue '$(terraform output queue)` --job-definition $(terraform output circuitscape)
 ```
 
 Backup again:
@@ -112,10 +147,22 @@ Backup again:
 aws datasync start-task-execution --task-arn '$(terraform output efs-data-backup-arn)`
 ```
 
-Check the s3 bucket in the web interface to be sure the data is available.
+
+## Run postprocessing
+
+```
+aws submit-job --job-name postprocessing --job-queue '$(terraform output queue)` --job-definition $(terraform output postprocessing)
+```
+
+You can check the batch tasks in the console:
+https://ap-southeast-2.console.aws.amazon.com/batch/v2/home
+
+Make sure to check the s3 bucket in the web interface to be sure the data is available.
 
 
-To finally destroy the R instance, run:
+## Destroy infastructure
+
+To finally destroy all infrastructure, besides the preexisting s3 bucket, run:
 
 ```
 terraform destroy

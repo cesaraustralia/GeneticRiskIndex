@@ -40,10 +40,22 @@ download_hdm <- function(taxon, taxapath) {
   }
   habitat_filename <- Sys.glob(file.path(download_dir, "*.tif"))[1]
   resistance_filename <- file.path(taxon_path(taxon, taxapath), RESISTANCE_RASTER)
-  terra::rast(habitat_filename) %>%
+  resistance_raster <- terra::rast(habitat_filename) %>%
     habitat_to_resistance() %>% 
-    crop_resistance(taxon, taxapath) %>%
-    terra::writeRaster(filename=resistance_filename, overwrite=TRUE)
+    crop_resistance(taxon, taxapath)
+  terra::writeRaster(resistance_raster, filename=resistance_filename, overwrite=TRUE)
+}
+
+
+add_cell_counts <- function(resistance_raster) {
+  total_cells <- count(resistance_raster)
+  taxonpath = taxon_path(taxon)
+  orphans_rast <- rast(file.path(taxonpath, "orphans.tif"))
+  preclusters_rast <- rast(file.path(taxonpath, "preclusters.tif"))
+  prop_orphans <- count(orphans_rast) / total_cells
+  prop_preclusters <- count(preclusters_rast) / total_cells
+  mutate(taxa, prop_preclusters = prop_preclusters, prop_orphans = prop_orphans)
+  taxon %>% add_cell_counts(resistance_raster)
 }
 
 # Invert percentage from % habitat quality to % movement resistance
@@ -67,3 +79,5 @@ crop_resistance <- function(resistance_raster, taxon, taxapath) {
   # Crop the resistance_raster to match "preclusters.tif"
   terra::crop(resistance_raster, crop_template)
 }
+
+

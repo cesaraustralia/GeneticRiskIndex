@@ -5,12 +5,12 @@ job_id = parse(Int, ARGS[1])
 datadir = joinpath(homedir(), "data")
 
 job_list = readlines(joinpath(datadir, "batch_jobs.txt"))
-job = job_list[job_id]
+job[job_id]
 println("Job taxon: $job")
 
 projectdir = dirname(Pkg.project().path)
 
-taxondir = joinpath(datadir, "taxa", job) 
+taxondir = joinpath(datadir, "taxa", job)
 localdir = joinpath(projectdir, "data")
 
 isdir(taxondir) || error("taxon directory $taxondir does not exist")
