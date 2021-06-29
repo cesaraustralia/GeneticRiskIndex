@@ -2,18 +2,22 @@
 
 This repository contains reproducible infrastructure and application scripts for
 calculating extinction risk index based on spatial separation of species,
-dispersal capacity, and landscape resistance processed with Circuitscape.jl. It
-is written for species in Victoria, Australia using the ALA occurrence datasets.
+dispersal capacity, and landscape resistance processed with
+[Circuitscape.jl](https://github.com/Circuitscape/Circuitscape.jl). It is
+written primarily for species in Victoria, Australia using the ALA occurrence
+datasets.
 
-Terraform is used to build the required Amazon Web Services (AWS) infrastructure
-to process hundreds/thousands of species. AWS containers are provisioned with R
-and Julia using [Ansible playbooks](https://docs.ansible.com/ansible/latest/user_guide/playbooks_intro.html).
+Terraform is used to build the required Amazon Web Services (AWS) Batch
+infrastructure to process hundreds/thousands of species. AWS containers are
+provisioned with R and Julia using
+[Docker](https://www.docker.com/resources/what-container).
 
 
-## Setup
+# Installation
 
 Software needed to run these scripts locally:
 - [terraform](https://www.terraform.io/)
+- [docker](https://docs.docker.com/get-docker/)
 - [aws cli](https://aws.amazon.com/cli/)
 
 On linux and mac these can be installed with most package managers (e.g. brew,
@@ -25,36 +29,20 @@ scripts are run from linux, either a local machine, a vm or a server.
 Once terraform and aws-cli are installed, clone or download this repository to
 get started.
 
-## Running Tasks with Terraform
+# Use
 
-The tasks in this project are run in on Amazon Web Services (AWS) using
-terraform. This needs an AWS account, details of which need to be filled out in
-a `terraform.tfvars` file placed in the `terraform` folder. This can be copied
-from the `terraform.tfvars.example` and filled in with your AWS credentials.
+## Overview
 
-The terraform run is broken into 3 steps. 
+The process is broken into a number of steps:
 
-1. Set up aws infrastructure for the project.
+1. Set up all AWS infrastructure for the project.
 
-2. Run an R container to download and prefilter taxon data.
+2. Run prefiltering, circuitscape and postprocessing iteratively until all tasks
+are working and outputs make sense.
 
-3. Start AWS Batch tasks (using julia docker container) for each taxon that
-requires a habitat resistance simulation. This is by far the largest use of
-server resources, and may be hundreds of containers.
+3. Back up all data to an S3 bucket. This can also happen during step 2.
 
-4. Run another task in an R container to finalise risk calculations from data
-returned by Circuitscape tasks.
-
-**⚠  WARNING terraform can start hundreds of AWS containers** 
-
-Be careful with the contents of your terraform.tfvars file, and the size of the
-csv returned from step 1 and passed to step 2. The number of taxon rows is the number of Fargate containers that will be created.
-
-These variables also have direct effect of the cost of AWS servers. 
-Larger numbers are more expensive:
-
-
-# Instructions
+4. Destroy all AWS infrastructure, besides the S3 bucket.
 
 
 ## Set AWS credentials
@@ -149,6 +137,10 @@ The file will be a list of taxa to run in circuitscape, you can check it to see 
 ```
 less job_list.txt
 ```
+
+**⚠  WARNING aws-cli commands can start thousands of containers** 
+
+Be careful to check the contents of your job_list.txt file are what you expect them to be.
 
 You can also set the job list, as long as you only include taxa that have been
 output by the R job previously:
