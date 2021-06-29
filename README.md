@@ -100,7 +100,7 @@ aws s3 cp sbv.tif s3://genetic-risk-index-bucket/habitat.tif
 aws s3 cp fire_severity.tif s3://genetic-risk-index-bucket/fire_severity.tif
 ```
 
-These only need to be uploaded once, unless you need to changed them. Then we
+These only need to be uploaded once, unless you need to change them. Then we
 can upload the csv containing the taxa we want to process in this batch:
 
 ```
@@ -110,7 +110,7 @@ aws s3 cp batch_taxa.csv s3://genetic-risk-index-bucket/batch_taxa.csv
 This will likely be repeatedly uploaded to run lists of taxa, as it is unlikely
 the whole list will run successfully immediately.
 
-Then, trigger the job. We can get the ids of our jobs and job queue from
+Then, trigger the R prefilter job. We can get the ids of our jobs and job queue from
 terraform, so we don't have to track any of that manually:
 
 ```
@@ -130,6 +130,7 @@ aws s3 ls s3://genetic-risk-index-bucket/data
 ```
 
 Or visit the s3 console page in a web browser:
+
 https://s3.console.aws.amazon.com/s3/buckets/genetic-risk-index-bucket
 
 Then we can run the Circuitscape batch jobs returned by the prefilter task
@@ -137,8 +138,35 @@ Then we can run the Circuitscape batch jobs returned by the prefilter task
 
 ## Run Circuitscape jobs
 
+Get the job list:
+
+```
+aws s3 cp s3://genetic-risk-index-bucket/job_list.txt job_list.txt
+```
+
+The file will be a list of taxa to run in circuitscape, you can check it to see if it makes sense.
+
+```
+less job_list.txt
+```
+
+You can also set the job list, as long as you only include taxa that have been
+output by the R job previously:
+
+```
+aws s3 cp job_list.txt s3://genetic-risk-index-bucket/job_list.txt 
+```
+
+Now run the first taxon in the list only, or a list of length 1:
+
 ```
 aws submit-job --job-name circuitscape --job-queue '$(terraform output queue)` --job-definition $(terraform output circuitscape)
+```
+
+For an array of taxa (must be 2 or more jobs, thats just how AWS Batch arrays work)
+
+```
+aws submit-job --array-properties size=$(wc -l job_list.txt) --job-name circuitscape --job-queue '$(terraform output queue)` --job-definition $(terraform output circuitscape)
 ```
 
 Backup again:
@@ -147,8 +175,7 @@ Backup again:
 aws datasync start-task-execution --task-arn '$(terraform output efs-data-backup-arn)`
 ```
 
-
-## Run postprocessing
+## Run post-processing
 
 ```
 aws submit-job --job-name postprocessing --job-queue '$(terraform output queue)` --job-definition $(terraform output postprocessing)
@@ -157,12 +184,13 @@ aws submit-job --job-name postprocessing --job-queue '$(terraform output queue)`
 You can check the batch tasks in the console:
 https://ap-southeast-2.console.aws.amazon.com/batch/v2/home
 
-Make sure to check the s3 bucket in the web interface to be sure the data is available.
+Make sure also to check the s3 bucket in the web interface to be sure the data
+is available before you destroy any infrastructure.
 
 
 ## Destroy infastructure
 
-To finally destroy all infrastructure, besides the preexisting s3 bucket, run:
+To finally destroy all infrastructure, besides the pre-existing s3 bucket, run:
 
 ```
 terraform destroy
