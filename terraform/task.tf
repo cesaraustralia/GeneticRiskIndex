@@ -36,7 +36,7 @@ resource "aws_batch_job_definition" "prefilter" {
 
   container_properties = <<CONTAINER_PROPERTIES
 {
-  "command": ["Rscript", "sctript.R"],
+  "command": ["git", "pull;" "Rscript", "prefilter.R"],
   "image": "${aws_ecr_repository.r_docker.repository_url}",
   "fargatePlatformConfiguration": {
     "platformVersion": "1.4.0"
@@ -68,7 +68,7 @@ resource "aws_batch_job_definition" "circuitscape" {
 
   container_properties = <<CONTAINER_PROPERTIES
 {
-  "command": ["julia", "--project=.", "circuitscape.jl"],
+  "command": ["git", "pull;" "julia", "--project=.", "circuitscape.jl"],
   "image": "${aws_ecr_repository.julia_docker.repository_url}",
   "fargatePlatformConfiguration": {
     "platformVersion": "1.4.0"
