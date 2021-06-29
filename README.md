@@ -21,10 +21,8 @@ Software needed to run these scripts locally:
 - [aws cli](https://aws.amazon.com/cli/)
 
 On linux and mac these can be installed with most package managers (e.g. brew,
-apt, pacman) and run from the command line. On windows ansible will need
-[cygwin](https://www.cygwin.com/), while terraform has a [windows
-installer](https://www.terraform.io/downloads.html). It is recommended these
-scripts are run from linux, either a local machine, a vm or a server.
+apt, pacman) and run from the command line. It is recommended these scripts are
+run from linux, either in a local machine, a virtual machine or on a server.
 
 Once terraform and aws-cli are installed, clone or download this repository to
 get started.
