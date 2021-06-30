@@ -41,10 +41,6 @@ BATCH_TAXA_URL <- paste0(BUCKET_URL, BATCH_TAXA_CSV)
 
 RESISTANCE_RASTER <- "resistance.tif"
 
-pc <- terra::rast(file.path(datapath, "taxa/Acanthiza_apicalis/preclusters.tif"))
-
-search_fields()
-
 # Download
 maybe_download(FIRE_SEVERITY_RASTER_URL, FIRE_SEVERITY_RASTER_PATH)
 maybe_download(HABITAT_RASTER_URL, HABITAT_RASTER_PATH)
