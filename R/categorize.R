@@ -30,13 +30,25 @@ precategorize_chunk <- function(taxa) {
 
 # ALA queries #############################################################
 
+# Add columns for each taxon of statewide and national observation counts
+add_count_cols <- function(taxa) {
+  cat("\nGetting taxon counts for initial filtering...\n")
+  count_taxa <- filter(taxa, assess == "ALA") 
+  state_counts <- get_state_counts(count_taxa) %>% rename(state_count = count, ala_search_term = species)
+  all_counts <- get_all_counts(count_taxa) %>% rename(ala_search_term = species)
+  taxa <- left_join(taxa, state_counts, by = "ala_search_term", all.x=TRUE)
+  taxa <- left_join(taxa, all_counts, by = "ala_search_term", all.x=TRUE)
+  cat("Counts retreived successfully.\n\n")
+  return(taxa)
+}
+
 # Retreive state counts from ALA
 get_state_counts <- function(taxa) {
   ala_counts(
     taxa = select_taxa(taxa$ala_search_term), 
     filters = select_filters(
       year = TIMESPAN,
-      basis_of_record = BASIS,
+      basisOfRecord = BASIS,
       stateProvince = STATE
     ),
     group_by = "species",
@@ -51,7 +63,7 @@ get_all_counts <- function(taxa) {
     taxa = select_taxa(taxa$ala_search_term), 
     filters = select_filters(
       year = TIMESPAN,
-      basis_of_record = BASIS
+      basisOfRecord = BASIS
     ),
     group_by = "species",
     type = "record",
@@ -65,15 +77,6 @@ get_all_counts <- function(taxa) {
 # Add a column that classifies risk. Initially "unknown".
 add_risk_col <- function(taxa) {
   taxa$risk <- rep(NA, length(taxa$ala_search_term))
-  return(taxa)
-}
-
-# Add columns for each taxon of statewide and national observation counts
-add_count_cols <- function(taxa) {
-  state_counts <- get_state_counts(taxa) %>% rename(state_count = count, ala_search_term = species)
-  all_counts <- get_all_counts(taxa) %>% rename(ala_search_term = species)
-  taxa <- merge(taxa, state_counts, by = "ala_search_term", all.x=TRUE)
-  taxa <- merge(taxa, all_counts, by = "ala_search_term", all.x=TRUE)
   return(taxa)
 }
 

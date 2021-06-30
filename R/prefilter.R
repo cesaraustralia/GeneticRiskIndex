@@ -41,6 +41,10 @@ BATCH_TAXA_URL <- paste0(BUCKET_URL, BATCH_TAXA_CSV)
 
 RESISTANCE_RASTER <- "resistance.tif"
 
+pc <- terra::rast(file.path(datapath, "taxa/Acanthiza_apicalis/preclusters.tif"))
+
+search_fields()
+
 # Download
 maybe_download(FIRE_SEVERITY_RASTER_URL, FIRE_SEVERITY_RASTER_PATH)
 maybe_download(HABITAT_RASTER_URL, HABITAT_RASTER_PATH)
@@ -70,7 +74,26 @@ precategorized_taxa$filter_category
 write_csv(precategorized_taxa, file.path(groupingspath, "precategorized_taxa.csv"))
 
 # Manual single taxon observations and preclusering for testing:
-# taxon <- failed_resistance_taxa[5, ]
+# taxon <- precategorized_taxa[1, ]
+# obs <- load_or_dowload_obs(taxon, taxapath, force_download=FALSE) %>%
+#   filter_observations(taxon) %>%
+#   precluster_observations(taxon)
+
+# taxonpath <- taxon_path(taxon, taxapath)
+# shapes <- sf::st_as_sf(obs, coords = c("x", "y"), crs = METRIC_EPSG)
+# scaled_eps <- taxon$eps * 1000 / 1.9
+
+# Create a full-sized raster for preclusters
+# preclustered <- buffer_preclustered(shapes, scaled_eps)
+# cat("Preclusters:", nrow(preclustered), "\n")
+# precluster_rast <- shape_to_raster(preclustered, taxon, mask_layer, taxonpath)
+# pixel_freq <- freq(precluster_rast)
+# pixel_freq
+# colnames(shapes)
+# left_join(shapes, pixel_freq, copy=TRUE, by=c("precluster" = "value")) %>%
+#   write_csv(file.path(taxapath, "preclusters.csv"))
+
+
 # process_observations(taxon, mask_layer, taxapath, error=TRUE)
 
 
@@ -82,7 +105,7 @@ nrow(isolation_taxa)
 head(isolation_taxa)
 
 # load/download, filter and precluster observations for all taxa
-preclustered_isolation_taxa <- process_observations(isolation_taxa, mask_layer, taxapath, error=TRUE)
+preclustered_isolation_taxa <- process_observations(isolation_taxa, mask_layer, taxapath, error=FALSE)
 head(preclustered_isolation_taxa)
 nrow(preclustered_isolation_taxa)
 

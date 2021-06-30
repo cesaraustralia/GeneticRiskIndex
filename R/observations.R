@@ -6,6 +6,7 @@
 process_observations <- function(taxa, mask_layer, taxapath, force_download=FALSE, error=FALSE) {
   preclustered_taxa <- add_column(taxa, 
     num_preclusters = 0, 
+    num_orphans = 0, 
     precluster_cell_count = 0, 
     orphan_cell_count = 0, 
     error = NA
@@ -17,25 +18,34 @@ process_observations <- function(taxa, mask_layer, taxapath, force_download=FALS
     # Try-catch-finally block to catch any errors that 
     # happen for individual taxa
     if (error) {
-      obs <- load_filter_write(taxon, taxapath, force_download)
+      # obs <- load_and_filter(taxon, taxapath, force_download)
+      if (max(obs$precluster) != 0) {
+        write_precluster(obs, taxon, mask_layer, taxapath)
+      } 
       # Add precluser number to data.
       preclustered_taxa[i, "num_preclusters"] <- max(obs$precluster)
     } else {
       out <- tryCatch({
         # Download, filter and precluster observation records
-        obs <- load_filter_write(taxon, taxapath, force_download)
-        list(NA, max(obs$precluster), obs$filter_category, sum(obs$cell_counts))
+        obs <- load_and_filter(taxon, taxapath, force_download)
+        # Create rasters with numbered preclustered observations
+        # If there are any clusters
+        if (max(obs$precluster) != 0) {
+          write_precluster(obs, taxon, mask_layer, taxapath)
+        } 
+        list(NA, max(obs$precluster), sum(obs$precluster == 0), taxa$filter_category)
       }, error = function(e) {
         error_without_linebreaks <- gsub("[\r\n]", " ", e)
         # Return error for debugging later
-        list(error_without_linebreaks, 0, "failed")
+        list(error_without_linebreaks, 0, 0, "failed")
       })
       # Add possible error messages, precluser number and risk category to data.
       preclustered_taxa[i, "error"] <- paste(out[1])
       preclustered_taxa[i, "num_preclusters"] <- out[2]
-      preclustered_taxa[i, "filter_category"] <- out[3]
-      preclustered_taxa[i, "precluster_cell_count"] <- out[4]
-      preclustered_taxa[i, "orphan_cell_count"] <- out[5]
+      preclustered_taxa[i, "num_orphans"] <- out[3]
+      preclustered_taxa[i, "filter_category"] <- out[4]
+      # preclustered_taxa[i, "precluster_cell_count"] <- out[4]
+      # preclustered_taxa[i, "orphan_cell_count"] <- out[5]
     }
   }
   preclustered_taxa %>%
@@ -44,18 +54,10 @@ process_observations <- function(taxa, mask_layer, taxapath, force_download=FALS
     label_no_clusters()
 }
 
-load_filter_write <- function(taxon, taxapath, force_download) {
-  obs <- load_or_dowload_obs(taxon, taxapath, force_download) %>%
+load_and_filter <- function(taxon, taxapath, force_download) {
+  load_or_dowload_obs(taxon, taxapath, force_download) %>%
     filter_observations(taxon) %>%
     precluster_observations(taxon)
-  # Create rasters with numbered preclustered observations
-  # If there are any clusters
-  if (max(obs$precluster) != 0) {
-    write_precluster(obs, taxon, mask_layer, taxapath)
-  } else {
-    preclustered_taxa <- add_column(taxa, cell_count = 0) 
-  }
-  return(obs)
 }
 
 label_many_clusters <- function(taxa) {
@@ -111,7 +113,7 @@ download_observations <- function(taxon) {
     filters = select_filters(
       # Limit observations by year, basis and state
       year = TIMESPAN,
-      basis_of_record = BASIS,
+      basisOfRecord = BASIS,
       stateProvince = STATE
     )
   )
@@ -177,33 +179,51 @@ scan_clusters <- function(obs, eps) {
 }
 
 
+dispersal_distance <- function(taxon) {
+  if (taxon$category == "Plants") {
+    max(taxon$male_disp, taxon$female_disp)
+  } else {
+    mean(taxon$male_disp, taxon$female_disp)
+  }
+}
+
 # Writing observation data ######################################################
 
 # Write the preclustered and orphan observations to raster files
 write_precluster <- function(obs, taxon, mask_layer, taxapath) {
+  plotpath <- file.path(taxapath, "../plots")
+  dir.create(plotpath, recursive = TRUE)
   taxonpath <- taxon_path(taxon, taxapath)
   shapes <- sf::st_as_sf(obs, coords = c("x", "y"), crs = METRIC_EPSG)
-  scaled_eps <- taxon$eps * 1000 / 1.9
+  scaled_eps <- dispersal_distance(taxon) * 1000 
 
-  # Create a full-sized raster for preclusters
+  # Create a raster for preclusters
   preclustered <- buffer_preclustered(shapes, scaled_eps)
   cat("Preclusters:", nrow(preclustered), "\n")
   precluster_rast <- shape_to_raster(preclustered, taxon, mask_layer, taxonpath)
-  # TODO: mutate to add cell counts for each: How to summaries this to the main taxa db?
-  num_preclucters <- count(preclusters_rast)
-  pixel_hist <- freq(preclusters_rast)
-  mutate(preclustered, cell_count = lapply(1:num_preclucters, count_matching, preclusters_rast))
-  write_csv(preclustered, file.path(taxapath, "preclusters.csv")
+  # Save a plot for fast inspection
+  jpeg(file.path(plotpath, paste0(taxon$ala_search_term, "_preclusters.jpg")))
+  plot(precluster_rast, main=paste0(taxon$ala_search_term, " preclusters"))
+  dev.off()
+  # Write a preclusters csv, with cluster numbers attached
+  pixel_freq <- freq(precluster_rast)
+  left_join(shapes, pixel_freq, copy=TRUE, by=c("precluster" = "value")) %>%
+    write_csv(file.path(taxonpath, "preclusters.csv"))
     
-  # Create a full-sized raster for orphans
+  # Create a raster for orphans
   orphans <- buffer_orphans(shapes, scaled_eps)
   cat("Orphans:", nrow(orphans), "\n")
   orphan_rast <- shape_to_raster(orphans, taxon, mask_layer, taxonpath)
-  write_csv(orphans, file.path(taxapath, "orphans.csv")
+  # Save a plot for fast inspection
+  jpeg(file.path(plotpath, paste0(taxon$ala_search_term, "_orphans.jpeg")))
+  plot(orphan_rast, main=paste0(taxon$ala_search_term, " orphans"))
+  dev.off()
+  # Write an orphans csv
+  write_csv(orphans, file.path(taxonpath, "orphans.csv"))
 
   # Make a crop template by trimming the empty values from a
   # combined precluster/orphan raster, with some added padding.
-  crop_rast = terra::merge(precluster_rast, orphan_rast) %>% 
+  crop_rast <- terra::merge(precluster_rast, orphan_rast) %>% 
     trim(padding=0)
 
   # Crop and write rasters
