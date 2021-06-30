@@ -76,7 +76,6 @@ terraform apply
 And answer 'yes'. This should build all the required infrastructure.
 
 
-
 ## Prefiltering
 
 We first need to upload the required `habitat.tif` and `fire_severity.tif` layers:
@@ -100,13 +99,13 @@ Then, trigger the R prefilter job. We can get the ids of our jobs and job queue 
 terraform, so we don't have to track any of that manually:
 
 ```
-aws submit-job --job-name prefilter --job-queue '$(terraform output queue)` --job-definition $(terraform output prefilter)
+aws batch submit-job --job-name prefilter --job-queue $(terraform output -raw queue) --job-definition $(terraform output -raw prefilter)
 ```
 
 The name can be anything you like. To back-up data from the run to the amazon s3 bucket:
 
 ```
-aws datasync start-task-execution --task-arn '$(terraform output efs-data-backup-arn)`
+aws datasync start-task-execution --task-arn '$(terraform output -raw efs-data-backup-arn)`
 ```
 
 We can check that it worked:
@@ -150,25 +149,25 @@ aws s3 cp job_list.txt s3://genetic-risk-index-bucket/job_list.txt
 Now run the first taxon in the list only, or a list of length 1:
 
 ```
-aws submit-job --job-name circuitscape --job-queue '$(terraform output queue)` --job-definition $(terraform output circuitscape)
+aws batch submit-job --job-name circuitscape --job-queue '$(terraform output -raw queue)` --job-definition $(terraform output -raw circuitscape)
 ```
 
 For an array of taxa (must be 2 or more jobs, thats just how AWS Batch arrays work)
 
 ```
-aws submit-job --array-properties size=$(wc -l job_list.txt) --job-name circuitscape --job-queue '$(terraform output queue)` --job-definition $(terraform output circuitscape)
+aws batch submit-job --array-properties size=$(wc -l job_list.txt) --job-name circuitscape --job-queue '$(terraform output -raw queue)` --job-definition $(terraform output -raw circuitscape)
 ```
 
 Backup again:
 
 ```
-aws datasync start-task-execution --task-arn '$(terraform output efs-data-backup-arn)`
+aws datasync start-task-execution --task-arn '$(terraform output -raw efs-data-backup-arn)`
 ```
 
 ## Run post-processing
 
 ```
-aws submit-job --job-name postprocessing --job-queue '$(terraform output queue)` --job-definition $(terraform output postprocessing)
+aws batch submit-job --job-name postprocessing --job-queue '$(terraform output -raw queue)` --job-definition $(terraform output -raw postprocessing)
 ```
 
 You can check the batch tasks in the console:
