@@ -36,27 +36,27 @@ resource "aws_ecr_repository" "julia_docker" {
   }
 }
 
-resource "null_resource" "local_r_docker_build" {
+resource "null_resource" "local_r_docker_build3" {
   depends_on = [aws_ecr_repository.r_docker]
   provisioner "local-exec" {
     command = <<EOF
+      cd ../docker/R
       $(aws ecr get-login --registry-ids 364518226878  --no-include-email)
-      cd ../../docker/R
-      sudo docker build -t ${var.project}-r .
-      sudo docker tag ${var.project}-r:latest ${aws_ecr_repository.julia_docker.repository_url}:latest
-      sudo docker push ${aws_ecr_repository.r_docker.repository_url}
+      docker build -t ${var.project}-r .
+      docker tag ${var.project}-r:latest ${aws_ecr_repository.r_docker.repository_url}:latest
+      docker push ${aws_ecr_repository.r_docker.repository_url}
     EOF
   }
 }
 
-resource "null_resource" "local_julia_docker_build" {
+resource "null_resource" "local_julia_docker_build3" {
   depends_on = [aws_ecr_repository.julia_docker]
   provisioner "local-exec" {
     command = <<EOF
-      $(aws ecr get-login --registry-ids 364518226878  --no-include-email)
-      cd ../../docker/julia
-      sudo docker build -t ${var.project}-julia .
-      sudo docker tag ${var.project}-julia:latest ${aws_ecr_repository.julia_docker.repository_url}:latest
+      $(aws ecr get-login --registry-ids 364518226878 --no-include-email)
+      cd ../docker/julia
+      docker build -t ${var.project}-julia ../
+      docker tag ${var.project}-julia:latest ${aws_ecr_repository.julia_docker.repository_url}:latest
       docker push ${aws_ecr_repository.julia_docker.repository_url}
     EOF
   }

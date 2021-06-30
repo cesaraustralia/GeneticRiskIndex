@@ -1,4 +1,4 @@
-resource "aws_vpc" "security" {
+resource "aws_vpc" "vpc" {
   cidr_block = "10.0.0.0/16"
   enable_dns_hostnames = true
   enable_dns_support = true
@@ -6,19 +6,19 @@ resource "aws_vpc" "security" {
 }
  
 resource "aws_internet_gateway" "gw" {
-  vpc_id = aws_vpc.security.id
+  vpc_id = aws_vpc.vpc.id
   tags = { Project = "${var.project}" }
 }
  
 resource "aws_subnet" "subnet" {
-  vpc_id            = aws_vpc.security.id
-  cidr_block        = aws_vpc.security.cidr_block
+  vpc_id            = aws_vpc.vpc.id
+  cidr_block        = aws_vpc.vpc.cidr_block
   availability_zone = var.aws_availability_zone
   tags = { Project = "${var.project}" }
 }
  
 resource "aws_route_table" "rt" {
-  vpc_id = aws_vpc.security.id
+  vpc_id = aws_vpc.vpc.id
   route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.gw.id
@@ -34,7 +34,7 @@ resource "aws_route_table_association" "route_table_association" {
 resource "aws_security_group" "security" {
   name        = "${var.project}-security"
   description = "Allow SSH, HTTP and EFS connection"
-  vpc_id      = aws_vpc.security.id
+  vpc_id      = aws_vpc.vpc.id
   tags = { Project = "${var.project}" }
 
   ingress {

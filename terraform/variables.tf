@@ -56,3 +56,31 @@ variable "julia_memory" {
   type = number
   default = 4096
 }
+
+variable "additional_cidrs" {
+  type = list
+  description = "A list of cidrs to limit security groups"
+  default = []     
+}
+
+
+variable "datasync_location_s3_subdirectory" {
+  type = string
+  description = "The s3 subdirectory job data is synced to with datasync"
+  default = "data"
+}
+
+variable "datasync_task_options" {
+  type        = map
+  description = "A map of datasync_task options block"
+  default = {
+    verify_mode            = "POINT_IN_TIME_CONSISTENT"
+    posix_permissions      = "NONE"
+    preserve_deleted_files = "REMOVE"
+    uid                    = "NONE"
+    gid                    = "NONE"
+    atime                  = "NONE"
+    mtime                  = "NONE"
+    bytes_per_second       = "-1"
+  }
+}
