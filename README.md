@@ -27,23 +27,24 @@ run from linux, either in a local machine, a virtual machine or on a server.
 Once terraform and aws-cli are installed, clone or download this repository to
 get started.
 
-# Use
+# Overview
 
-## Overview
+The process of running these scripts is broken into a number of steps:
 
-The process is broken into a number of steps:
+1. Define an AWS S3 bucket for data storage throughout the project.
 
-1. Set up all AWS infrastructure for the project.
+2. Set up all AWS other infrastructure with terraform.
 
-2. Run prefiltering, circuitscape and postprocessing iteratively until all tasks
+3. Run prefiltering, circuitscape and postprocessing iteratively until all tasks
 are working and outputs make sense.
 
-3. Back up all data to an S3 bucket. This can also happen during step 2.
+4. Back up all data to the S3 bucket. This can also happen during step 2.
 
-4. Destroy all AWS infrastructure, besides the S3 bucket.
+5. Destroy all AWS infrastructure using terraform, besides the S3 bucket.
 
+# Instructions
 
-## Set AWS credentials
+## Set AWS
 
 `aws cli` handles storing your aws credentials in your system.
 Terraform will use these to create instances in your account, and we 
@@ -58,7 +59,18 @@ aws configure
 and follow the prompt.
 
 
-## Set up infrastructure
+## Set up an AWS bucket for long term file storage
+
+Go to https://s3.console.aws.amazon.com and click "create bucket", and define
+a bucket called "genetic-risk-index-bucket". Other names are possible but will
+need a variable place in a main.tfvars file in the terraform directory:
+
+```
+s3_bucket=your-bucket-name
+```
+
+
+## Set up all other infrastructure
 
 To simulate setting up infrastructure, from the command line run:
 
@@ -158,6 +170,7 @@ For an array of taxa (must be 2 or more jobs, thats just how AWS Batch arrays wo
 aws batch submit-job --array-properties size=$(wc -l job_list.txt) --job-name circuitscape --job-queue '$(terraform output -raw queue)` --job-definition $(terraform output -raw circuitscape)
 ```
 
+
 Backup again:
 
 ```
@@ -177,9 +190,9 @@ Make sure also to check the s3 bucket in the web interface to be sure the data
 is available before you destroy any infrastructure.
 
 
-## Destroy infastructure
+## Destroy infrastructure
 
-To finally destroy all infrastructure, besides the pre-existing s3 bucket, run:
+To finally destroy all infrastructure besides the s3 bucket, run:
 
 ```
 terraform destroy

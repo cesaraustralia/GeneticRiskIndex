@@ -105,7 +105,7 @@ resource "aws_batch_job_definition" "prefilter" {
       "name": "efs",
       "efsVolumeConfiguration": {
         "fileSystemId": "${aws_efs_file_system.efs-storage.id}",
-        "rootDirectory": "/efs"
+        "rootDirectory": "/home/docker/data"
       }
     }
   ]
@@ -145,7 +145,7 @@ resource "aws_batch_job_definition" "circuitscape" {
       "name": "efs",
       "efsVolumeConfiguration": {
         "fileSystemId": "${aws_efs_file_system.efs-storage.id}",
-        "rootDirectory": "/efs"
+        "rootDirectory": "/home/docker/data"
       }
     }
   ]

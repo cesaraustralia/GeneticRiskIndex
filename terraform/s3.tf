@@ -20,13 +20,17 @@ resource "aws_s3_bucket_policy" "bucket_policy" {
     {
       "Sid": "",
       "Effect": "Allow",
-      "Principal": {"AWS": ["arn:aws:iam::364518226878:root"]},
+      "Principal": "*",
       "Action": [
         "s3:PutObject", 
         "s3:GetObject", 
         "s3:DeleteObject"
       ],
-      "Resource":"${data.aws_s3_bucket.bucket.arn}/*"
+      "Resource": [
+        "${data.aws_s3_bucket.bucket.arn}",
+        "${data.aws_s3_bucket.bucket.arn}/*",
+        "${data.aws_s3_bucket.bucket.arn}/job/*"
+      ]
     }
   ]
 }

@@ -2,6 +2,6 @@
 .terraform
 .terraform*
 terraform*
-./key.*
+key.*
 *.auto.*
 *.csv

@@ -63,7 +63,6 @@ variable "additional_cidrs" {
   default = []     
 }
 
-
 variable "datasync_location_s3_subdirectory" {
   type = string
   description = "The s3 subdirectory job data is synced to with datasync"
