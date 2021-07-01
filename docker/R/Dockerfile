@@ -33,6 +33,8 @@ RUN Rscript -e 'install.packages(c("rgdal","rgeos","sf","terra","tmap"))'
 Run echo "rebuild the cache after this x2"
 RUN git clone https://github.com/cesaraustralia/GeneticRiskIndex /project/GeneticRiskIndex
 RUN chown -R docker /project/GeneticRiskIndex
+RUN mkdir -p /home/docker/data
+RUN chown -R docker /home/docker/data
 
 WORKDIR /project/GeneticRiskIndex/R
 USER docker

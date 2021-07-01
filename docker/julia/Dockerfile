@@ -10,6 +10,8 @@ RUN useradd docker \
 RUN git clone https://github.com/cesaraustralia/GeneticRiskIndex /project/GeneticRiskIndex
 RUN chown -R docker /project/GeneticRiskIndex
 RUN su docker -c 'julia --project=/project/GeneticRiskIndex/julia -e "using Pkg; Pkg.instantiate()"'
+RUN mkdir -p /home/docker/data
+RUN chown -R docker /home/docker/data
 
 USER docker
 WORKDIR /project/GeneticRiskIndex/julia
