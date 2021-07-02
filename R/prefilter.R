@@ -17,6 +17,7 @@ ala_email <- "rafaelschouten@gmail.com"
 STATE <- "Victoria"
 TIMESPAN <- c(1960:2021)
 BASIS <- "HumanObservation"
+THROW_ERRORS <- FALSE
 
 # In case downloads run out of time
 options(timeout=500)
@@ -101,7 +102,7 @@ nrow(isolation_taxa)
 head(isolation_taxa)
 
 # load/download, filter and precluster observations for all taxa
-preclustered_isolation_taxa <- process_observations(isolation_taxa, mask_layer, taxapath, error=FALSE)
+preclustered_isolation_taxa <- process_observations(isolation_taxa, mask_layer, taxapath, error=THROW_ERRORS)
 head(preclustered_isolation_taxa)
 nrow(preclustered_isolation_taxa)
 
