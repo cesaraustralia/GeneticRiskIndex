@@ -42,9 +42,41 @@ are working and outputs make sense.
 
 5. Destroy all AWS infrastructure using terraform, besides the S3 bucket.
 
-# Instructions
 
-## Set AWS
+# Local Instructions
+
+All scripts can be run locally, as well as in the cloud. However they need
+the same data available. This must be in a `data` folder in your home directory.
+
+It must include:
+
+- habitat.tif
+- fire_severity.tif
+- batch_taxa.csv
+
+First run the R script found at:
+
+R/prefilter.R
+
+
+The julia script can then be run with:
+
+```
+cd GeneticRiskIndex/julia
+julia --project=. circuitscape.jl
+```
+
+To run a specific item, here the 5th taxon, use:
+
+```
+AWS_BATCH_JOB_ARRAY_INDEX=5 julia --project=. circuitscape.jl
+```
+
+The jobs are listed in data/job_list.txt, which is output by prefilter.R.
+
+# Cloud Instructions
+
+## Set up AWS
 
 `aws cli` handles storing your aws credentials in your system.
 Terraform will use these to create instances in your account, and we 
@@ -59,7 +91,7 @@ aws configure
 and follow the prompt.
 
 
-## Set up an AWS bucket for long term file storage
+## Set up an AWS bucket for long-term cloud file storage
 
 Go to https://s3.console.aws.amazon.com and click "create bucket", and define
 a bucket called "genetic-risk-index-bucket". Other names are possible but will
@@ -117,7 +149,7 @@ aws batch submit-job --job-name prefilter --job-queue $(terraform output -raw qu
 The name can be anything you like. To back-up data from the run to the amazon s3 bucket:
 
 ```
-aws datasync start-task-execution --task-arn '$(terraform output -raw efs-data-backup-arn)`
+aws datasync start-task-execution --task-arn $(terraform output -raw efs-data-backup-arn)
 ```
 
 We can check that it worked:
@@ -161,26 +193,26 @@ aws s3 cp job_list.txt s3://genetic-risk-index-bucket/job_list.txt
 Now run the first taxon in the list only, or a list of length 1:
 
 ```
-aws batch submit-job --job-name circuitscape --job-queue '$(terraform output -raw queue)` --job-definition $(terraform output -raw circuitscape)
+aws batch submit-job --job-name circuitscape --job-queue $(terraform output -raw queue) --job-definition $(terraform output -raw circuitscape)
 ```
 
 For an array of taxa (must be 2 or more jobs, thats just how AWS Batch arrays work)
 
 ```
-aws batch submit-job --array-properties size=$(wc -l job_list.txt) --job-name circuitscape --job-queue '$(terraform output -raw queue)` --job-definition $(terraform output -raw circuitscape)
+aws batch submit-job --array-properties size=$(wc -l job_list.txt) --job-name circuitscape --job-queue $(terraform output -raw queue) --job-definition $(terraform output -raw circuitscape)
 ```
 
 
 Backup again:
 
 ```
-aws datasync start-task-execution --task-arn '$(terraform output -raw efs-data-backup-arn)`
+aws datasync start-task-execution --task-arn $(terraform output -raw efs-data-backup-arn)
 ```
 
 ## Run post-processing
 
 ```
-aws batch submit-job --job-name postprocessing --job-queue '$(terraform output -raw queue)` --job-definition $(terraform output -raw postprocessing)
+aws batch submit-job --job-name postprocessing --job-queue $(terraform output -raw queue) --job-definition $(terraform output -raw postprocessing)
 ```
 
 You can check the batch tasks in the console:
