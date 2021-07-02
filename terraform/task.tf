@@ -100,12 +100,19 @@ resource "aws_batch_job_definition" "prefilter" {
     {"type": "MEMORY", "value": "${var.julia_memory}"}
   ],
   "executionRoleArn": "${aws_iam_role.task_execution_role.arn}",
+  "mountPoints": [
+    {
+      "sourceVolume": "efs",
+      "containerPath": "/root/data",
+      "readOnly": false
+    }
+  ],
   "volumes": [
     {
       "name": "efs",
       "efsVolumeConfiguration": {
         "fileSystemId": "${aws_efs_file_system.efs-storage.id}",
-        "rootDirectory": "/home/docker/data"
+        "rootDirectory": "/"
       }
     }
   ]
@@ -140,12 +147,20 @@ resource "aws_batch_job_definition" "circuitscape" {
     {"type": "MEMORY", "value": "${var.julia_memory}"}
   ],
   "executionRoleArn": "${aws_iam_role.task_execution_role.arn}",
+  "jobRoleArn": "${aws_iam_role.task_execution_role.arn}",
+  "mountPoints": [
+    {
+      "sourceVolume": "efs",
+      "containerPath": "/root/data",
+      "readOnly": false
+    }
+  ],
   "volumes": [
     {
       "name": "efs",
       "efsVolumeConfiguration": {
         "fileSystemId": "${aws_efs_file_system.efs-storage.id}",
-        "rootDirectory": "/home/docker/data"
+        "rootDirectory": "/"
       }
     }
   ]
