@@ -199,9 +199,9 @@ scan_clusters <- function(obs, eps) {
 
 dispersal_distance <- function(taxon) {
   if (taxon$category == "Plants") {
-    max(taxon$male_disp, taxon$female_disp)
+    max(c(taxon$male_disp, taxon$female_disp))
   } else {
-    mean(taxon$male_disp, taxon$female_disp)
+    mean(c(taxon$male_disp, taxon$female_disp))
   }
 }
 
@@ -230,7 +230,7 @@ write_precluster <- function(obs, taxon, mask_layer, taxapath) {
     
   # Create a raster for orphans
   orphans <- buffer_orphans(shapes, scaled_eps)
-  cat("Orphans:", nrow(orphans), "\n")
+  # cat("Orphans:", nrow(orphans), "\n")
   orphan_rast <- shape_to_raster(orphans, taxon, mask_layer, taxonpath)
   # Save a plot for fast inspection
   jpeg(file.path(plotpath, paste0(taxon$ala_search_term, "_orphans.jpeg")))
