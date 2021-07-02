@@ -288,10 +288,10 @@ resource "aws_security_group" "datasync-security" {
 #   }
 # }
 
-resource "aws_datasync_task" "this" {
-  name                     = "${var.project}-datasync-task"
-  source_location_arn      = "${aws_datasync_location_s3.this.arn}"
-  destination_location_arn = "${aws_datasync_location_efs.this.arn}"
+resource "aws_datasync_task" "backup" {
+  name                     = "${var.project}-datasync-backup"
+  source_location_arn      = "${aws_datasync_location_efs.this.arn}"
+  destination_location_arn = "${aws_datasync_location_s3.this.arn}"
   cloudwatch_log_group_arn = "${join("", split(":*", aws_cloudwatch_log_group.this.arn))}"
 
   options {
@@ -304,10 +304,32 @@ resource "aws_datasync_task" "this" {
     atime                  = "${var.datasync_task_options["atime"]}"
     mtime                  = "${var.datasync_task_options["mtime"]}"
   }
+}
 
-  tags = {
-    Name = "{var.project}-datasync-task"
+resource "aws_datasync_task" "restore" {
+  name                     = "${var.project}-datasync-restore"
+  destination_location_arn = "${aws_datasync_location_efs.this.arn}"
+  source_location_arn      = "${aws_datasync_location_s3.this.arn}"
+  cloudwatch_log_group_arn = "${join("", split(":*", aws_cloudwatch_log_group.this.arn))}"
+
+  options {
+    bytes_per_second       = -1
+    verify_mode            = "${var.datasync_task_options["verify_mode"]}"
+    posix_permissions      = "${var.datasync_task_options["posix_permissions"]}"
+    preserve_deleted_files = "${var.datasync_task_options["preserve_deleted_files"]}"
+    uid                    = "${var.datasync_task_options["uid"]}"
+    gid                    = "${var.datasync_task_options["gid"]}"
+    atime                  = "${var.datasync_task_options["atime"]}"
+    mtime                  = "${var.datasync_task_options["mtime"]}"
   }
 }
 
+output "backup-arn" {
+  description = "ARB for data backup task"
+  value = aws_datasync_task.backup.arn
+}
 
+output "restore-arn" {
+  description = "ARB for data restore task"
+  value = aws_datasync_task.restore.arn
+}
