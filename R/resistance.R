@@ -7,10 +7,13 @@ prepare_resistance_files <- function(taxa, taxapath) {
   for (i in 1:nrow(taxa)) {
     taxon <- taxa[i, ] 
     tryCatch({
-      if (taxon$resist_model_type[[1]] == "Species") {
-        download_hdm(taxon, taxapath)
-      } else {
-        use_generic_hdm(taxon, taxapath)
+      crop_filename <- file.path(taxon_path(taxon, taxapath), "preclusters.tif")
+      if (file.exists(crop_filename)) {
+        if (taxon$resist_model_type[[1]] == "Species") {
+          download_hdm(taxon, taxapath, crop_filename)
+        } else {
+          use_generic_hdm(taxon, taxapath, crop_filename)
+        }
       }
     }, error = function(e) {
       warning("Failed to download resistance file for ", taxon$ala_search_term, " ", e)
@@ -21,7 +24,7 @@ prepare_resistance_files <- function(taxa, taxapath) {
 # Download the HDM layer for this taxon
 # Formatted as:
 # "https://maps2.biodiversity.vic.gov.au/Models/SMP_Dromaius%20novaehollandiae_Emu_10001.zip"
-download_hdm <- function(taxon, taxapath) {
+download_hdm <- function(taxon, taxapath, crop_filename) {
   cat("Downloading specific habitat layer for", taxon$ala_search_term, "\n")
   taxon_id <- taxon$vic_taxon_id[[1]]
   taxon_escaped <- gsub(" ", "%20", taxon$delwp_taxon)[[1]]
@@ -41,7 +44,7 @@ download_hdm <- function(taxon, taxapath) {
   resistance_filename <- file.path(taxon_path(taxon, taxapath), RESISTANCE_RASTER)
   resistance_raster <- terra::rast(habitat_filename) %>%
     habitat_to_resistance() %>% 
-    crop_resistance(taxon, taxapath)
+    crop_resistance(taxon, crop_filename)
   terra::writeRaster(resistance_raster, filename=resistance_filename, overwrite=TRUE)
 }
 
@@ -51,7 +54,7 @@ habitat_to_resistance <- function(habitat_raster) {
 }
 
 # Crop a section of the generic HDM resistance file as the resisance file for this taxon
-use_generic_hdm <- function(taxon, taxapath) {
+use_generic_hdm <- function(taxon, taxapath, crop_filename) {
   cat("Using generic resistance HDM for", taxon$ala_search_term, "\n")
   resistance_filename <- file.path(taxon_path(taxon, taxapath), RESISTANCE_RASTER)
   terra::rast(HABITAT_RASTER_PATH) %>%
@@ -60,8 +63,7 @@ use_generic_hdm <- function(taxon, taxapath) {
     terra::writeRaster(filename=resistance_filename, overwrite=TRUE)
 }
 
-crop_resistance <- function(resistance_raster, taxon, taxapath) {
-  crop_filename <- file.path(taxon_path(taxon, taxapath), "preclusters.tif")
+crop_resistance <- function(resistance_raster, crop_filename) {
   crop_template <- terra::rast(crop_filename)
   # Crop the resistance_raster to match "preclusters.tif"
   terra::crop(resistance_raster, crop_template)
