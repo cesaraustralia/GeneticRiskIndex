@@ -233,7 +233,7 @@ write_precluster <- function(obs, taxon, mask_layer, taxapath) {
   # cat("Orphans:", nrow(orphans), "\n")
   orphan_rast <- shape_to_raster(orphans, taxon, mask_layer, taxonpath)
   # Save a plot for fast inspection
-  jpeg(file.path(plotpath, paste0(taxon$ala_search_term, "_orphans.jpeg")))
+  jpeg(file.path(plotpath, paste0(taxon$ala_search_term, "_orphans.jpg")))
   plot(orphan_rast, main=paste0(taxon$ala_search_term, " orphans"))
   dev.off()
   # Write an orphans csv
