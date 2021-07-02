@@ -7,8 +7,8 @@ process_observations <- function(taxa, mask_layer, taxapath, force_download=FALS
   preclustered_taxa <- add_column(taxa, 
     num_preclusters = 0, 
     num_orphans = 0, 
-    precluster_cell_count = 0, 
-    orphan_cell_count = 0, 
+    precluster_cellcount = 0, 
+    orphan_cellcount = 0, 
     error = NA
   ) 
   num_preclusters <- 0
@@ -18,12 +18,21 @@ process_observations <- function(taxa, mask_layer, taxapath, force_download=FALS
     # Try-catch-finally block to catch any errors that 
     # happen for individual taxa
     if (error) {
-      # obs <- load_and_filter(taxon, taxapath, force_download)
+      obs <- load_and_filter(taxon, taxapath, force_download)
       if (max(obs$precluster) != 0) {
-        write_precluster(obs, taxon, mask_layer, taxapath)
+        cell_counts <- write_precluster(obs, taxon, mask_layer, taxapath)
+      } else {
+        cell_counts <- c(0, 0)
       } 
       # Add precluser number to data.
-      preclustered_taxa[i, "num_preclusters"] <- max(obs$precluster)
+      out <- list(
+        NA, 
+        max(obs$precluster), 
+        sum(obs$precluster == 0), 
+        taxa$filter_category, 
+        cell_counts[1], 
+        cell_counts[2]
+      )
     } else {
       out <- tryCatch({
         # Download, filter and precluster observation records
@@ -31,22 +40,31 @@ process_observations <- function(taxa, mask_layer, taxapath, force_download=FALS
         # Create rasters with numbered preclustered observations
         # If there are any clusters
         if (max(obs$precluster) != 0) {
-          write_precluster(obs, taxon, mask_layer, taxapath)
+          cell_counts <- write_precluster(obs, taxon, mask_layer, taxapath)
+        } else {
+          cell_counts <- c(0, 0)
         } 
-        list(NA, max(obs$precluster), sum(obs$precluster == 0), taxa$filter_category)
+        list(
+          NA, 
+          max(obs$precluster), 
+          sum(obs$precluster == 0), 
+          taxa$filter_category, 
+          cell_counts[1], 
+          cell_counts[2]
+        )
       }, error = function(e) {
         error_without_linebreaks <- gsub("[\r\n]", " ", e)
         # Return error for debugging later
-        list(error_without_linebreaks, 0, 0, "failed")
+        list(error_without_linebreaks, 0, 0, "failed", 0, 0)
       })
-      # Add possible error messages, precluser number and risk category to data.
-      preclustered_taxa[i, "error"] <- paste(out[1])
-      preclustered_taxa[i, "num_preclusters"] <- out[2]
-      preclustered_taxa[i, "num_orphans"] <- out[3]
-      preclustered_taxa[i, "filter_category"] <- out[4]
-      # preclustered_taxa[i, "precluster_cell_count"] <- out[4]
-      # preclustered_taxa[i, "orphan_cell_count"] <- out[5]
     }
+    # Add possible error messages, precluser number and risk category to data.
+    preclustered_taxa[i, "error"] <- paste(out[1])
+    preclustered_taxa[i, "num_preclusters"] <- out[2]
+    preclustered_taxa[i, "num_orphans"] <- out[3]
+    preclustered_taxa[i, "filter_category"] <- out[4]
+    preclustered_taxa[i, "precluster_cellcount"] <- out[5]
+    preclustered_taxa[i, "orphan_cellcount"] <- out[6]
   }
   preclustered_taxa %>%
     label_many_clusters() %>%
@@ -236,7 +254,9 @@ write_precluster <- function(obs, taxon, mask_layer, taxapath) {
   # be altered later, the orphans is only orphans.
   file.copy("orpans.tif", "short_circuit.tif")
 
-  return(c(precluster_filename, orphan_filename))
+  precluster_cellcount <- sum(freq(precluster_rast))
+  orphan_cellcount <- sum(freq(orphan_rast))
+  return(c(precluster_cellcount, orphan_cellcount))
 }
 
 # Add the cell counts
