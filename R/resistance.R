@@ -42,10 +42,10 @@ download_hdm <- function(taxon, taxapath, crop_filename) {
   }
   habitat_filename <- Sys.glob(file.path(download_dir, "*.tif"))[1]
   resistance_filename <- file.path(taxon_path(taxon, taxapath), RESISTANCE_RASTER)
-  resistance_raster <- terra::rast(habitat_filename) %>%
+  terra::rast(habitat_filename) %>%
     habitat_to_resistance() %>%
-    crop_resistance(taxon, crop_filename)
-  terra::writeRaster(resistance_raster, filename=resistance_filename, overwrite=TRUE)
+    crop_resistance(crop_filename) %>%
+    terra::writeRaster(resistance_raster, filename=resistance_filename, overwrite=TRUE)
 }
 
 # Invert percentage from % habitat quality to % movement resistance
@@ -59,7 +59,7 @@ use_generic_hdm <- function(taxon, taxapath, crop_filename) {
   resistance_filename <- file.path(taxon_path(taxon, taxapath), RESISTANCE_RASTER)
   terra::rast(HABITAT_RASTER_PATH) %>%
     habitat_to_resistance() %>%
-    crop_resistance(taxon, crop_filename) %>%
+    crop_resistance(crop_filename) %>%
     terra::writeRaster(filename=resistance_filename, overwrite=TRUE)
 }
 
