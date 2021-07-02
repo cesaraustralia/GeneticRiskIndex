@@ -45,7 +45,13 @@ RESISTANCE_RASTER <- "resistance.tif"
 # Download
 maybe_download(FIRE_SEVERITY_RASTER_URL, FIRE_SEVERITY_RASTER_PATH)
 maybe_download(HABITAT_RASTER_URL, HABITAT_RASTER_PATH)
-maybe_download(BATCH_TAXA_URL, BATCH_TAXA_CSV_PATH)
+if (Sys.getenv("AWS_BATCH_CE_NAME") != "") {
+  # If we are on aws batch, always download updated taxa
+  download.file(BATCH_TAXA_URL, BATCH_TAXA_CSV_PATH)
+} else {
+  maybe_download(BATCH_TAXA_URL, BATCH_TAXA_CSV_PATH)
+}
+
 
 # Plot rasters
 # HABITAT_RASTER_PATH %>% terra::rast() %>% plot
