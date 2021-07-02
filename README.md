@@ -54,10 +54,12 @@ It must include:
 - fire_severity.tif
 - batch_taxa.csv
 
-First run the R script found at:
+First run the R script can be run with:
 
-R/prefilter.R
-
+```
+cd GeneticRiskIndex/R
+Rscript prefilter.R
+```
 
 The julia script can then be run with:
 
@@ -139,10 +141,12 @@ aws s3 cp batch_taxa.csv s3://genetic-risk-index-bucket/batch_taxa.csv
 This will likely be repeatedly uploaded to run lists of taxa, as it is unlikely
 the whole list will run successfully immediately.
 
-Then, trigger the R prefilter job. We can get the ids of our jobs and job queue from
-terraform, so we don't have to track any of that manually:
+Then, navigate to the terraform folder and trigger the R prefilter job. We can
+get the ids of our jobs and job queue from terraform, so we don't have to track
+any of that manually:
 
 ```
+cd GeneticRiskIndex/terraform
 aws batch submit-job --job-name prefilter --job-queue $(terraform output -raw queue) --job-definition $(terraform output -raw prefilter)
 ```
 
