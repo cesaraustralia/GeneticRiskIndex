@@ -47,6 +47,16 @@ variable "public_key_openssh" {
   default = "key.openssh.pub"
 }
 
+variable "r_cpus" {
+  type = number
+  default = 2
+}
+
+variable "r_memory" {
+  type = number
+  default = 16384
+}
+
 variable "julia_cpus" {
   type = number
   default = 1
@@ -54,7 +64,7 @@ variable "julia_cpus" {
 
 variable "julia_memory" {
   type = number
-  default = 4096
+  default = 8192
 }
 
 variable "additional_cidrs" {

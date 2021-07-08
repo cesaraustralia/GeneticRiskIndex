@@ -96,8 +96,8 @@ resource "aws_batch_job_definition" "prefilter" {
     "secretOptions": []
   },
   "resourceRequirements": [
-    {"type": "VCPU", "value": "${var.julia_cpus}"},
-    {"type": "MEMORY", "value": "${var.julia_memory}"}
+    {"type": "VCPU", "value": "${var.r_cpus}"},
+    {"type": "MEMORY", "value": "${var.r_memory}"}
   ],
   "executionRoleArn": "${aws_iam_role.task_execution_role.arn}",
   "mountPoints": [
