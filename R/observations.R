@@ -1,9 +1,8 @@
 
+# Get observation data, precluster it into numbered groups, and write to both csv and raster files ##
 # Main method called from scripts 
-
-# Get observation data, precluster it into numbered groups, and write to 
-# both csv and raster files.
-process_observations <- function(taxa, mask_layer, taxapath, force_download=FALSE, error=FALSE) {
+process_observations <- function(taxa, mask_layer, taxapath, force_download=FALSE, throw_errors=FALSE) {
+  # Add new columns to taxa dataframe
   preclustered_taxa <- add_column(taxa, 
     num_preclusters = 0, 
     num_orphans = 0, 
@@ -12,65 +11,60 @@ process_observations <- function(taxa, mask_layer, taxapath, force_download=FALS
     error = NA
   ) 
   num_preclusters <- 0
+
+  # Loop over each taxa
+  # We do some slightly complicated return value handling here to allow for error catching.
   for (i in 1:nrow(preclustered_taxa)) {
     taxon <- preclustered_taxa[i, ] 
     cat("\nTaxon: ", taxon$ala_search_term, "\n")
-    # Try-catch-finally block to catch any errors that 
-    # happen for individual taxa
-    if (error) {
-      obs <- load_and_filter(taxon, taxapath, force_download)
-      if (max(obs$precluster) != 0) {
-        cell_counts <- write_precluster(obs, taxon, mask_layer, taxapath)
-      } else {
-        cell_counts <- c(0, 0)
-      } 
-      # Add precluser number to data.
-      out <- list(
-        NA, 
-        max(obs$precluster), 
-        sum(obs$precluster == 0), 
-        taxa$filter_category, 
-        cell_counts[1], 
-        cell_counts[2]
-      )
+
+    # Throw errors as normal if anything goes wrong
+    if (throw_errors) {
+      try_block(taxon, taxapath, force_download)
     } else {
       out <- tryCatch({
-        # Download, filter and precluster observation records
-        obs <- load_and_filter(taxon, taxapath, force_download)
-        # Create rasters with numbered preclustered observations
-        # If there are any clusters
-        if (max(obs$precluster) != 0) {
-          cell_counts <- write_precluster(obs, taxon, mask_layer, taxapath)
-        } else {
-          cell_counts <- c(0, 0)
-        } 
-        list(
-          NA, 
-          max(obs$precluster), 
-          sum(obs$precluster == 0), 
-          taxa$filter_category, 
-          cell_counts[1], 
-          cell_counts[2]
-        )
+        try_block(taxon, taxapath, force_download)
       }, error = function(e) {
-        error_without_linebreaks <- gsub("[\r\n]", " ", e)
+        error_string <- gsub("[\r\n]", " ", e)
+        filter_category <- "failed" 
         # Return error for debugging later
-        list(error_without_linebreaks, 0, 0, "failed", 0, 0)
+        list(error_string, filter_category, 0, 0, 0, 0)
       })
     }
-    # Add possible error messages, precluser number and risk category to data.
+
+    # Add possible error messages, filter category, precluser/orphan numbers and cellcounts to dataframe
     preclustered_taxa[i, "error"] <- paste(out[1])
-    preclustered_taxa[i, "num_preclusters"] <- out[2]
-    preclustered_taxa[i, "num_orphans"] <- out[3]
-    preclustered_taxa[i, "filter_category"] <- out[4]
+    preclustered_taxa[i, "filter_category"] <- out[2]
+    preclustered_taxa[i, "num_preclusters"] <- out[3]
+    preclustered_taxa[i, "num_orphans"] <- out[4]
     preclustered_taxa[i, "precluster_cellcount"] <- out[5]
     preclustered_taxa[i, "orphan_cellcount"] <- out[6]
   }
-  preclustered_taxa %>%
-    label_many_clusters() %>%
-    label_few_clusters() %>%
-    label_no_clusters()
+
+  return(label_by_clusters(taxa))
 }
+
+# Block to run either with or without error checking
+try_block <- function(taxon, taxapath, force_download) {
+  # Download, filter and precluster observation records
+  obs <- load_and_filter(taxon, taxapath, force_download)
+  # Create rasters with numbered preclustered observations
+  # If there are any clusters
+  if (max(obs$precluster) != 0) {
+    cell_counts <- write_precluster(obs, taxon, mask_layer, taxapath)
+  } else {
+    cell_counts <- c(0, 0)
+  }
+  error_string <- Na
+  num_preclusters <- max(obs$precluster)
+  num_orphans <- sum(obs$precluster == 0)
+  filter_category <- taxa$filter_category 
+  precluster_cellcount <- cell_counts[1]
+  orphan_cellcount <- cell_counts[2]
+  list(error_string, filter_category, num_preclusters, num_orphans, precluster_cellcount, orphan_cellcount)
+}
+
+# Load and filter observations
 
 load_and_filter <- function(taxon, taxapath, force_download) {
   load_or_dowload_obs(taxon, taxapath, force_download) %>%
@@ -78,27 +72,6 @@ load_and_filter <- function(taxon, taxapath, force_download) {
     precluster_observations(taxon)
 }
 
-label_many_clusters <- function(taxa) {
-  # Taxa that we don't need to process - these have a lot of preclusters
-  id <- taxa$num_preclusters > MAX_CLUSTERS
-  taxa$risk[id] <- "abundant"
-  taxa$filter_category[id] <- "many_clusters"  
-  return(taxa)
-}
-
-label_few_clusters <- function(taxa) {
-  id <- taxa$num_preclusters < MIN_CLUSTERS & taxa$num_preclusters > 0
-  taxa$risk[id] <- "rare"
-  taxa$filter_category[id] <- "few_clusters"  
-  return(taxa)
-}
-
-label_no_clusters <- function(taxa) {
-  id <- taxa$num_preclusters == 0
-  taxa$risk[id] <- "rare"
-  taxa$filter_category[id] <- "no_clusters"  
-  return(taxa)
-}
 
 # Retrieving observation data from ALA ######################################################
 
@@ -125,7 +98,7 @@ read_cached_observations <- function(taxon, csv_path) {
 
 # Get taxon observations from ALA using `galah`
 download_observations <- function(taxon) {
-  cat("  Retrieving observations from ALA for ", taxon$ala_search_term, "\n")
+  cat("  Retrieving observations from ALA for ", taxon$ala_search_term, "...\n")
   obs <- ala_occurrences(
     taxa = select_taxa(taxon$ala_search_term),
     filters = select_filters(
@@ -135,10 +108,12 @@ download_observations <- function(taxon) {
       stateProvince = STATE
     )
   )
+  cat("  Observations retreived successfully\n")
   return(obs)
 }
 
-# Manipulating observation data ######################################################
+
+# Clean observation data ######################################################
 
 # Filter observations data #####
 filter_observations <- function(obs, taxon) {
@@ -173,7 +148,7 @@ remove_location_duplicates <- function(obs) {
 }
 
 
-# Clustering observation data ######################################################
+# Cluster observation data ######################################################
 
 # Categorise preclusters and add preclusters column to dataframe
 precluster_observations <- function(obs, taxon) {
@@ -205,7 +180,8 @@ dispersal_distance <- function(taxon) {
   }
 }
 
-# Writing observation data ######################################################
+
+# Write observation data ######################################################
 
 # Write the preclustered and orphan observations to raster files
 write_precluster <- function(obs, taxon, mask_layer, taxapath) {
@@ -298,4 +274,46 @@ shape_to_raster <- function(shape, taxon, mask_layer, taxonpath) {
   } else {
       mask_layer * 0
   }
+}
+
+
+# Label taxa that we don't need to process due to cluster numbers ######################################
+
+label_by_clusters <- function(taxa) {
+  taxa %>%
+    label_high_orphan_area() %>%
+    label_many_clusters() %>%
+    label_few_clusters() %>%
+    label_no_clusters()
+}
+
+# - That have too many orphan cells compared to precluster cells
+label_high_orphan_area <- function(taxa) {
+  id <- taxa$orphan_cellcount / taxa$precluster_cellcount > MAX_ORPHAN_PRECLUSTER_RATIO
+  taxa$filter_category[id] <- "high_ratio_orphan_cells"  
+  return(taxa)
+}
+
+# - That have too many preclusters
+label_many_clusters <- function(taxa) {
+  id <- taxa$num_preclusters > MAX_CLUSTERS
+  taxa$risk[id] <- "abundant"
+  taxa$filter_category[id] <- "many_clusters"  
+  return(taxa)
+}
+
+# - That have too few preclusters
+label_few_clusters <- function(taxa) {
+  id <- taxa$num_preclusters < MIN_CLUSTERS & taxa$num_preclusters > 0
+  taxa$risk[id] <- "rare"
+  taxa$filter_category[id] <- "few_clusters"  
+  return(taxa)
+}
+
+# - That have no preclusters
+label_no_clusters <- function(taxa) {
+  id <- taxa$num_preclusters == 0
+  taxa$risk[id] <- "rare"
+  taxa$filter_category[id] <- "no_clusters"  
+  return(taxa)
 }

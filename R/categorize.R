@@ -82,7 +82,7 @@ add_risk_col <- function(taxa) {
 
 # Label very common species as "abundant"
 label_many_observations <- function(taxa) {
-  ids <- taxa$state_count > MAXCOUNT
+  ids <- taxa$state_count > MAX_OBSERVATIONS
   taxa$risk[ids] <- "abundant"
   taxa$filter_category[ids] <- "many_observations"
   return(taxa)
@@ -90,7 +90,7 @@ label_many_observations <- function(taxa) {
 
 # Label very rare species as "rare"
 label_few_observations <- function(taxa) {
-  ids <- taxa$state_count < MINCOUNT
+  ids <- taxa$state_count < MIN_OBSERVATIONS
   taxa$risk[ids] <- "rare"
   taxa$filter_category[ids] <- "few_observations"
   return(taxa)
@@ -99,7 +99,7 @@ label_few_observations <- function(taxa) {
 # Label species not relevent to STATE e.g. Victoria
 label_low_regional_relevance <- function(taxa) {
   # TODO: is the proportion enough?
-  ids <- (taxa$state_count / taxa$count) < MINPROPINSTATE
+  ids <- (taxa$state_count / taxa$count) < MIN_PROP_IN_STATE
   taxa$risk[ids] <- "widespread"
   taxa$filter_category[ids] <- "low_proportion_in_state"
   return(taxa)
