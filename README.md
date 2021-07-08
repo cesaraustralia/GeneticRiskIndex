@@ -166,7 +166,18 @@ Or visit the s3 console page in a web browser:
 
 https://s3.console.aws.amazon.com/s3/buckets/genetic-risk-index-bucket
 
-Then we can run the Circuitscape batch jobs returned by the prefilter task
+
+We can also download all the data to a local directory:
+
+```
+aws s3 sync s3://genetic-risk-index-bucket/data output_data
+```
+
+Or just the prefilter/orphan plots:
+
+```
+aws s3 sync s3://genetic-risk-index-bucket/data/plots output_plots
+```
 
 
 ## Run Circuitscape jobs
