@@ -4,27 +4,26 @@
 
 variable "project" {
   type = string
-  default = "genetic-risk-index" 
 }
 
 variable "project_repo" {
   type = string
-  default = "https://github.com/cesaraustralia/GeneticRiskIndex"
 }
 
 variable "s3_bucket" {
   type = string
-  default = "genetic-risk-index-bucket"
+}
+
+variable "aws_id" {
+  type = string
 }
 
 variable "aws_region" {
   type = string
-  default = "ap-southeast-2"
 }
 
 variable "aws_availability_zone" {
   type = string
-  default = "ap-southeast-2a"
 }
 
 variable "aws_credentials" {

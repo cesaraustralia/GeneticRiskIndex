@@ -5,84 +5,9 @@ source("resistance.R")
 source("distance.R")
 source("fire_severity.R")
 
-# Run parameters ######################################################################
-# TODO: put these in a toml (?) config file
-
-# Maximum number of observastion
-MAX_OBSERVATIONS <- 10000
-# Minimum number of observastion
-MIN_OBSERVATIONS <- 50
-# The maximum orphan/precluster ratio based on raster cell counts
-MAX_ORPHAN_PRECLUSTER_RATIO <- 1.0
-# Maximum number of clusters to run in Circuitscape
-MAX_CLUSTERS <- 80
-# Miinium number of clusters to run in Circuitscape
-MIN_CLUSTERS <- 1
-# Miinium proportion of observations found in the target state, e.g Victoria
-MIN_PROP_IN_STATE <- 0.1
-
-# URL of the AWS bucket where data is stored
-BUCKET_URL = "https://genetic-risk-index-bucket.s3.ap-southeast-2.amazonaws.com/"
-# Email so ALA works
-ala_email <- "rafaelschouten@gmail.com"
-# State index is being calculated for (ALA state name)
-STATE <- "Victoria"
-# Time span of observations considered
-TIMESPAN <- c(1960:2021)
-# Observation basis
-BASIS <- "HumanObservation"
-# Wether to throw errors immediately or just store them and continue
-THROW_ERRORS <- FALSE
-
-#a In case downloads run out of time
-options(timeout=500)
-
-# Paths to files and folders #########################################################
-datapath <- file.path(path_home(), "data")
-taxapath <- file.path(datapath, "taxa")
-groupingspath <- file.path(datapath, "groupings")
-dir.create(taxapath, recursive = TRUE)
-dir.create(groupingspath, recursive = TRUE)
-ala_config(email=ala_email)
-
-HABITAT_RASTER <- "habitat.tif"
-HABITAT_RASTER_PATH <- file.path(datapath, HABITAT_RASTER)
-HABITAT_RASTER_URL <- paste0(BUCKET_URL, HABITAT_RASTER)
-
-FIRE_SEVERITY_RASTER <- "fire_severity.tif"
-FIRE_SEVERITY_RASTER_PATH <- file.path(datapath, FIRE_SEVERITY_RASTER)
-FIRE_SEVERITY_RASTER_URL <- paste0(BUCKET_URL, FIRE_SEVERITY_RASTER)
-
-BATCH_TAXA_CSV <- "batch_taxa.csv"
-BATCH_TAXA_CSV_PATH <- file.path(datapath, BATCH_TAXA_CSV)
-BATCH_TAXA_URL <- paste0(BUCKET_URL, BATCH_TAXA_CSV)
-
-RESISTANCE_RASTER <- "resistance.tif"
-
-# Download
-maybe_download(FIRE_SEVERITY_RASTER_URL, FIRE_SEVERITY_RASTER_PATH)
-maybe_download(HABITAT_RASTER_URL, HABITAT_RASTER_PATH)
-if (Sys.getenv("AWS_BATCH_CE_NAME") != "") {
-  # If we are on aws batch, always download updated taxa
-  download.file(BATCH_TAXA_URL, BATCH_TAXA_CSV_PATH)
-} else {
-  maybe_download(BATCH_TAXA_URL, BATCH_TAXA_CSV_PATH)
-}
-
-# Plot rasters
-# HABITAT_RASTER_PATH %>% terra::rast() %>% plot
-# FIRE_SEVERITY_RASTER_PATH %>% terra::rast() %>% plot
-
-mask_layer <- terra::rast(HABITAT_RASTER_PATH) < 0
-terra::crs(mask_layer) < as.character(sp::CRS(paste0("+init=epsg:", METRIC_EPSG)))
-# plot(mask_layer)
-
-
-
 # Load main taxa dataframe from csv ###################################################
 taxa <- read.csv(BATCH_TAXA_CSV_PATH, header = TRUE)
 head(taxa)
-
 
 #######################################################################################
 # Precategorize based on counts
@@ -146,7 +71,7 @@ categorized_taxa$error
 # Circuitscape/isolation by resistance output
 
 # Write csv for taxa that we need to process with circuitscape
-isolation_by_resistance_taxa <- filter(preclustered_isolation_taxa, risk == "unknown", filter_category == "isolation_by_resistance")
+isolation_by_resistance_taxa <- filter(preclustered_isolation_taxa, is.na(risk), filter_category == "isolation_by_resistance")
 head(isolation_by_resistance_taxa)
 nrow(isolation_by_resistance_taxa)
 write_csv(isolation_by_resistance_taxa, file.path(groupingspath, "isolation_by_resistance_taxa.csv"))

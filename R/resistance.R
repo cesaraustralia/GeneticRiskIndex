@@ -45,7 +45,7 @@ download_hdm <- function(taxon, taxapath, crop_filename) {
   terra::rast(habitat_filename) %>%
     habitat_to_resistance() %>%
     crop_resistance(crop_filename) %>%
-    terra::writeRaster(resistance_raster, filename=resistance_filename, overwrite=TRUE)
+    terra::writeRaster(filename=resistance_filename, overwrite=TRUE)
 }
 
 # Invert percentage from % habitat quality to % movement resistance

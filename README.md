@@ -97,7 +97,7 @@ and follow the prompt.
 
 Go to https://s3.console.aws.amazon.com and click "create bucket", and define
 a bucket called "genetic-risk-index-bucket". Other names are possible but will
-need a variable place in a main.tfvars file in the terraform directory:
+need a variable place in a terraform.tfvars file in the terraform directory:
 
 ```
 s3_bucket=your-bucket-name
@@ -124,9 +124,11 @@ And answer 'yes'. This should build all the required infrastructure.
 
 ## Prefiltering
 
-We first need to upload the required `habitat.tif` and `fire_severity.tif` layers:
+We first need to upload the our config file and the required 
+`habitat.tif` and `fire_severity.tif` layers:
 
 ```
+aws s3 cp config.toml s3://genetic-risk-index-bucket/prefilter_config.toml
 aws s3 cp sbv.tif s3://genetic-risk-index-bucket/habitat.tif
 aws s3 cp fire_severity.tif s3://genetic-risk-index-bucket/fire_severity.tif
 ```
