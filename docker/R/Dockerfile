@@ -29,7 +29,7 @@ RUN apt-get update && \
 # install R packages
 RUN Rscript -e 'install.packages(c("tidyverse","lubridate","galah","fpc"))'
 RUN Rscript -e 'install.packages(c("rgdal","rgeos","sf","terra","tmap"))'
-RUN Rscript -e 'install.packages(c("RcppTOML"))
+RUN Rscript -e 'install.packages("RcppTOML")'
 
 Run echo "rebuild the cache after this x2"
 RUN git clone https://github.com/cesaraustralia/GeneticRiskIndex /root/GeneticRiskIndex

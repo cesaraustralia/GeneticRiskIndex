@@ -67,14 +67,20 @@ BATCH_TAXA_URL <- paste0(BUCKET_URL, BATCH_TAXA_CSV)
 
 RESISTANCE_RASTER <- "resistance.tif"
 
+CONFIG_FILE <- "config.toml"
+CONFIG_PATH <- file.path(datapath, CONFIG_FILE)
+CONFIG_URL <- paste0(BUCKET_URL, CONFIG_FILE)
+
 # Download
 maybe_download(FIRE_SEVERITY_RASTER_URL, FIRE_SEVERITY_RASTER_PATH)
 maybe_download(HABITAT_RASTER_URL, HABITAT_RASTER_PATH)
-# If we are on aws batch, always download updated taxa
+# If we are on aws batch, always download updated taxa and config
 if (Sys.getenv("AWS_BATCH_CE_NAME") != "") {
   download.file(BATCH_TAXA_URL, BATCH_TAXA_CSV_PATH)
+  download.file(CONFIG_URL, CONFIG_PATH)
 } else {
   maybe_download(BATCH_TAXA_URL, BATCH_TAXA_CSV_PATH)
+  maybe_download(CONFIG_URL, CONFIG_PATH)
 }
 
 # Plot rasters
