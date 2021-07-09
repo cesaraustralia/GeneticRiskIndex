@@ -1,5 +1,3 @@
-# URL of the AWS bucket where data is stored
-BUCKET_URL = "https://your-bucket.s3.your-region-X.amazonaws.com/"
 # Email so ALA works
 ALA_EMAIL = "your@email.com"
 # Maximum number of observastion

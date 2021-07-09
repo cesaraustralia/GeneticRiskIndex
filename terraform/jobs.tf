@@ -82,7 +82,7 @@ resource "aws_batch_job_definition" "prefilter" {
 
   container_properties = <<CONTAINER_PROPERTIES
 {
-  "command": ["/bin/bash", "-c", "git pull && Rscript prefilter.R"],
+  "command": ["/bin/bash", "-c", "git pull && Rscript prefilter.R https://${data.aws_s3_bucket.bucket.bucket_regional_domain_name}"],
   "image": "${aws_ecr_repository.r_docker.repository_url}",
   "fargatePlatformConfiguration": {
     "platformVersion": "1.4.0"

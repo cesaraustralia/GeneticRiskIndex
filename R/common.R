@@ -38,15 +38,6 @@ maybe_download <- function(url, path) {
 # Primary path for all input data
 datapath <- file.path(path_home(), "data")
 
-# Get config variables from the toml file
-list2env(parseTOML(file.path(datapath, "config.toml")), globalenv())
-# Define timespan
-TIMESPAN <- c(TIME_START:TIME_END)
-# ALA needs an email address for some reason
-ala_config(email=ALA_EMAIL)
-# In case downloads run out of time
-options(timeout=500)
-
 # Paths to files and folders #########################################################
 taxapath <- file.path(datapath, "taxa")
 groupingspath <- file.path(datapath, "groupings")
@@ -55,33 +46,48 @@ dir.create(groupingspath, recursive = TRUE)
 
 HABITAT_RASTER <- "habitat.tif"
 HABITAT_RASTER_PATH <- file.path(datapath, HABITAT_RASTER)
-HABITAT_RASTER_URL <- paste0(BUCKET_URL, HABITAT_RASTER)
 
 FIRE_SEVERITY_RASTER <- "fire_severity.tif"
 FIRE_SEVERITY_RASTER_PATH <- file.path(datapath, FIRE_SEVERITY_RASTER)
-FIRE_SEVERITY_RASTER_URL <- paste0(BUCKET_URL, FIRE_SEVERITY_RASTER)
 
 BATCH_TAXA_CSV <- "batch_taxa.csv"
 BATCH_TAXA_CSV_PATH <- file.path(datapath, BATCH_TAXA_CSV)
-BATCH_TAXA_URL <- paste0(BUCKET_URL, BATCH_TAXA_CSV)
 
 RESISTANCE_RASTER <- "resistance.tif"
 
 CONFIG_FILE <- "config.toml"
 CONFIG_PATH <- file.path(datapath, CONFIG_FILE)
-CONFIG_URL <- paste0(BUCKET_URL, CONFIG_FILE)
 
-# Download
-maybe_download(FIRE_SEVERITY_RASTER_URL, FIRE_SEVERITY_RASTER_PATH)
-maybe_download(HABITAT_RASTER_URL, HABITAT_RASTER_PATH)
-# If we are on aws batch, always download updated taxa and config
-if (Sys.getenv("AWS_BATCH_CE_NAME") != "") {
-  download.file(BATCH_TAXA_URL, BATCH_TAXA_CSV_PATH)
-  download.file(CONFIG_URL, CONFIG_PATH)
-} else {
-  maybe_download(BATCH_TAXA_URL, BATCH_TAXA_CSV_PATH)
-  maybe_download(CONFIG_URL, CONFIG_PATH)
+# Download from s3 bucket if it is passed as a command line argument
+args = commandArgs(trailingOnly=TRUE)
+if (length(args) > 0) {
+  bucket_url <- paste0(args[1], "/")
+  batch_taxa_url <- paste0(bucket_url, BATCH_TAXA_CSV)
+  config_url <- paste0(bucket_url, CONFIG_FILE)
+  habitat_raster_url <- paste0(bucket_url, HABITAT_RASTER)
+  fire_severity_raster_url <- paste0(bucket_url, FIRE_SEVERITY_RASTER)
+
+  # Download
+  maybe_download(fire_severity_raster_url, FIRE_SEVERITY_RASTER_PATH)
+  maybe_download(habitat_raster_url, HABITAT_RASTER_PATH)
+  # If we are on aws batch, always download updated taxa and config
+  if (Sys.getenv("AWS_BATCH_CE_NAME") != "") {
+    download.file(batch_taxa_url, BATCH_TAXA_CSV_PATH)
+    download.file(config_url, CONFIG_PATH)
+  } else {
+    maybe_download(batch_taxa_url, BATCH_TAXA_CSV_PATH)
+    maybe_download(config_url, CONFIG_PATH)
+  }
 }
+
+# Get config variables from the toml file
+list2env(parseTOML(file.path(datapath, CONFIG_FILE)), globalenv())
+# Define timespan
+TIMESPAN <- c(TIME_START:TIME_END)
+# ALA needs an email address for some reason
+ala_config(email=ALA_EMAIL)
+# In case downloads run out of time
+options(timeout=500)
 
 # Plot rasters
 # HABITAT_RASTER_PATH %>% terra::rast() %>% plot
