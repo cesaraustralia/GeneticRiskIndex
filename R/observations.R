@@ -41,7 +41,7 @@ process_observations <- function(taxa, mask_layer, taxapath, force_download=FALS
     preclustered_taxa[i, "orphan_cellcount"] <- out[6]
   }
 
-  return(label_by_clusters(taxa))
+  return(label_by_clusters(preclustered_taxa))
 }
 
 # Block to run either with or without error checking
@@ -183,6 +183,13 @@ dispersal_distance <- function(taxon) {
 
 # Write observation data ######################################################
 
+sf_to_df <- function(x){
+  x %>%
+    mutate(x = st_coordinates(.)[,1],
+           y = st_coordinates(.)[,2]) %>%
+    st_drop_geometry()
+}
+
 # Write the preclustered and orphan observations to raster files
 write_precluster <- function(obs, taxon, mask_layer, taxapath) {
   plotpath <- file.path(taxapath, "../plots")
@@ -212,8 +219,9 @@ write_precluster <- function(obs, taxon, mask_layer, taxapath) {
   png(file.path(plotpath, paste0(taxon$ala_search_term, "_orphans.png")))
   plot(orphan_rast, main=paste0(taxon$ala_search_term, " orphans"))
   dev.off()
+
   # Write an orphans csv
-  write_csv(orphans, file.path(taxonpath, "orphans.csv"))
+  write_csv(sf_to_df(orphans), file.path(taxonpath, "orphans.csv"))
 
   # Make a crop template by trimming the empty values from a
   # combined precluster/orphan raster, with some added padding.
