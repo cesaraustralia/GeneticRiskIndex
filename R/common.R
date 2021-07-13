@@ -1,3 +1,12 @@
+# Package names
+packages <- c("galah", "fpc", "lubridate", "sf", "terra", "tidyverse", "fs", "RcppTOML")
+
+# Install packages not yet installed
+installed_packages <- packages %in% rownames(installed.packages())
+if (any(installed_packages == FALSE)) {
+  install.packages(packages[!installed_packages])
+}
+
 library(galah)
 library(fpc)
 library(lubridate)
