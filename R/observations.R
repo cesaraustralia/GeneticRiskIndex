@@ -196,7 +196,7 @@ write_precluster <- function(obs, taxon, mask_layer, taxapath) {
   cat("Preclusters:", nrow(preclustered), "\n")
   precluster_rast <- shape_to_raster(preclustered, taxon, mask_layer, taxonpath)
   # Save a plot for fast inspection
-  jpeg(file.path(plotpath, paste0(taxon$ala_search_term, "_preclusters.jpg")))
+  png(file.path(plotpath, paste0(taxon$ala_search_term, "_preclusters.png")))
   plot(precluster_rast, main=paste0(taxon$ala_search_term, " preclusters"))
   dev.off()
   # Write a preclusters csv, with cluster numbers attached
@@ -209,7 +209,7 @@ write_precluster <- function(obs, taxon, mask_layer, taxapath) {
   # cat("Orphans:", nrow(orphans), "\n")
   orphan_rast <- shape_to_raster(orphans, taxon, mask_layer, taxonpath)
   # Save a plot for fast inspection
-  jpeg(file.path(plotpath, paste0(taxon$ala_search_term, "_orphans.jpg")))
+  png(file.path(plotpath, paste0(taxon$ala_search_term, "_orphans.png")))
   plot(orphan_rast, main=paste0(taxon$ala_search_term, " orphans"))
   dev.off()
   # Write an orphans csv
