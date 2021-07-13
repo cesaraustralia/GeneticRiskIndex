@@ -120,6 +120,53 @@ resource "aws_batch_job_definition" "prefilter" {
 CONTAINER_PROPERTIES
 }
 
+resource "aws_batch_job_definition" "postprocessing" {
+  name = "${var.project}-prefilter"
+  type = "container"
+  platform_capabilities = [
+    "FARGATE",
+  ]
+
+  container_properties = <<CONTAINER_PROPERTIES
+{
+  "command": ["/bin/bash", "-c", "git pull && Rscript postprocessing.R https://${data.aws_s3_bucket.bucket.bucket_regional_domain_name}"],
+  "image": "${aws_ecr_repository.r_docker.repository_url}",
+  "fargatePlatformConfiguration": {
+    "platformVersion": "1.4.0"
+  },
+  "networkConfiguration": {
+    "assignPublicIp": "ENABLED"
+  },
+  "logConfiguration": {
+    "logDriver": "awslogs",
+    "options": {},
+    "secretOptions": []
+  },
+  "resourceRequirements": [
+    {"type": "VCPU", "value": "${var.r_cpus}"},
+    {"type": "MEMORY", "value": "${var.r_memory}"}
+  ],
+  "executionRoleArn": "${aws_iam_role.task_execution_role.arn}",
+  "mountPoints": [
+    {
+      "sourceVolume": "efs",
+      "containerPath": "/root/data",
+      "readOnly": false
+    }
+  ],
+  "volumes": [
+    {
+      "name": "efs",
+      "efsVolumeConfiguration": {
+        "fileSystemId": "${aws_efs_file_system.efs-storage.id}",
+        "rootDirectory": "/"
+      }
+    }
+  ]
+}
+CONTAINER_PROPERTIES
+}
+
 resource "aws_batch_job_definition" "circuitscape" {
   name = "${var.project}_circuitscape"
   type = "container"
