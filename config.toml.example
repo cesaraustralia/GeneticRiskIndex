@@ -1,0 +1,23 @@
+# Email so ALA works
+ALA_EMAIL = "your@email.com"
+# Maximum number of observastion
+MAX_OBSERVATIONS = 10000
+# Minimum number of observastion
+MIN_OBSERVATIONS = 50
+# The maximum orphan/precluster ratio based on raster cell counts
+MAX_ORPHAN_PRECLUSTER_RATIO = 1.0
+# Maximum number of clusters to run in Circuitscape
+MAX_CLUSTERS = 80
+# Miinium number of clusters to run in Circuitscape
+MIN_CLUSTERS = 1
+# Miinium proportion of observations found in the target state, e.g Victoria
+MIN_PROP_IN_STATE = 0.1
+# State index is being calculated for (ALA state name)
+STATE = "Victoria"
+# Time span of observations considered
+TIME_START = 1960
+TIME_END = 2021
+# Observation basis
+BASIS = "HumanObservation"
+# Wether to throw errors immediately or just store them and continue
+THROW_ERRORS = false
