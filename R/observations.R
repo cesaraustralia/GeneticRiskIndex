@@ -222,13 +222,13 @@ write_precluster <- function(obs, taxon, mask_layer, taxapath) {
 
   # Crop and write rasters
   precluster_filename <- file.path(taxonpath, "preclusters.tif")
-  orphan_filename <- file.path(taxonpath, "orpans.tif")
+  orphan_filename <- file.path(taxonpath, "orphans.tif")
   short_circuit_filename <- file.path(taxonpath, "short_circuit.tif")
   crop(precluster_rast, crop_rast, filename=precluster_filename, overwrite=TRUE)
   crop(orphan_rast, crop_rast, filename=orphan_filename, overwrite=TRUE)
   # Make a short circuit and orphans file, as the short circuit may
   # be altered later, the orphans is only orphans.
-  file.copy("orpans.tif", "short_circuit.tif")
+  file.copy(orphan_filename, short_circuit_filename)
 
   precluster_cellcount <- sum(freq(precluster_rast))
   orphan_cellcount <- sum(freq(orphan_rast))
