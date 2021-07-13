@@ -184,10 +184,14 @@ dispersal_distance <- function(taxon) {
 # Write observation data ######################################################
 
 sf_to_df <- function(x){
-  x %>%
-    mutate(x = st_coordinates(.)[,1],
-           y = st_coordinates(.)[,2]) %>%
-    st_drop_geometry()
+  if (is(x, "sf")) {
+    x %>%
+      mutate(x = st_coordinates(.)[,1],
+             y = st_coordinates(.)[,2]) %>%
+      st_drop_geometry()
+  } else {
+    x
+  }
 }
 
 # Write the preclustered and orphan observations to raster files
