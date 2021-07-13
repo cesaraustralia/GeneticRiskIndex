@@ -53,6 +53,7 @@ It must include:
 - habitat.tif
 - fire_severity.tif
 - batch_taxa.csv
+- config.toml (modified from config.toml.example in this repo)
 
 First run the R script with:
 
@@ -124,17 +125,23 @@ And answer 'yes'. This should build all the required infrastructure.
 
 ## Prefiltering
 
-We first need to upload the our config file and the required 
-`habitat.tif` and `fire_severity.tif` layers:
+We first need to upload the our config file and the required `habitat.tif` and
+`fire_severity.tif` layers:
 
 ```
-aws s3 cp config.toml s3://genetic-risk-index-bucket/prefilter_config.toml
 aws s3 cp sbv.tif s3://genetic-risk-index-bucket/habitat.tif
 aws s3 cp fire_severity.tif s3://genetic-risk-index-bucket/fire_severity.tif
 ```
 
-These only need to be uploaded once, unless you need to change them. Then we
-can upload the csv containing the taxa we want to process in this batch:
+These only need to be uploaded once, unless you need to change them. 
+
+Then copy your `config.toml file`, modified from `config.toml.example` in this repository:
+
+```
+aws s3 cp config.toml s3://genetic-risk-index-bucket/config.toml
+```
+
+Then we can upload the csv containing the taxa we want to process in this batch:
 
 ```
 aws s3 cp batch_taxa.csv s3://genetic-risk-index-bucket/batch_taxa.csv
