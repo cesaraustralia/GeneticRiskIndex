@@ -41,7 +41,7 @@ resource "null_resource" "local_r_docker_build" {
   provisioner "local-exec" {
     command = <<EOF
       cd ../docker/R
-      $(aws ecr get-login --registry-ids ${var.aws_id} --no-include-email)
+      aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${aws_ecr_repository.r_docker.repository_url}
       docker build -t ${var.project}-r .
       docker tag ${var.project}-r:latest ${aws_ecr_repository.r_docker.repository_url}:latest
       docker push ${aws_ecr_repository.r_docker.repository_url}
@@ -54,7 +54,7 @@ resource "null_resource" "local_julia_docker_build" {
   provisioner "local-exec" {
     command = <<EOF
       cd ../docker/julia
-      $(aws ecr get-login --registry-ids ${var.aws_id} --no-include-email)
+      aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${aws_ecr_repository.julia_docker.repository_url}
       docker build -t ${var.project}-julia .
       docker tag ${var.project}-julia:latest ${aws_ecr_repository.julia_docker.repository_url}:latest
       docker push ${aws_ecr_repository.julia_docker.repository_url}
