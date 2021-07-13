@@ -54,7 +54,7 @@ It must include:
 - fire_severity.tif
 - batch_taxa.csv
 
-First run the R script can be run with:
+First run the R script with:
 
 ```
 cd GeneticRiskIndex/R
