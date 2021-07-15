@@ -222,6 +222,17 @@ output "queue" {
 }
 
 output "prefilter" {
-  description = "The batch queue"
+  description = "Prefilter batch job"
   value = aws_batch_job_definition.prefilter.name
+}
+
+
+output "circuitscape" {
+  description = "Circuitscape batch job"
+  value = aws_batch_job_definition.circuitscape.name
+}
+
+output "postprocessing" {
+  description = "Postprocessing batch job"
+  value = aws_batch_job_definition.postprocessing.name
 }
