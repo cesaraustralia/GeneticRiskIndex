@@ -20,10 +20,10 @@ process_observations <- function(taxa, mask_layer, taxapath, force_download=FALS
 
     # Throw errors as normal if anything goes wrong
     if (throw_errors) {
-      try_block(taxon, taxapath, force_download)
+      try_taxon_observations(taxon, taxapath, force_download)
     } else {
       out <- tryCatch({
-        try_block(taxon, taxapath, force_download)
+        try_taxon_observations(taxon, taxapath, force_download)
       }, error = function(e) {
         error_string <- gsub("[\r\n]", " ", e)
         filter_category <- "failed" 
@@ -44,8 +44,8 @@ process_observations <- function(taxa, mask_layer, taxapath, force_download=FALS
   return(label_by_clusters(preclustered_taxa))
 }
 
-# Block to run either with or without error checking
-try_block <- function(taxon, taxapath, force_download) {
+# Block to run either with or without a try/catch block
+try_taxon_observations <- function(taxon, taxapath, force_download) {
   # Download, filter and precluster observation records
   obs <- load_and_filter(taxon, taxapath, force_download)
   # Create rasters with numbered preclustered observations
@@ -55,10 +55,10 @@ try_block <- function(taxon, taxapath, force_download) {
   } else {
     cell_counts <- c(0, 0)
   }
-  error_string <- Na
+  error_string <- NA
+  filter_category <- taxon$filter_category 
   num_preclusters <- max(obs$precluster)
   num_orphans <- sum(obs$precluster == 0)
-  filter_category <- taxa$filter_category 
   precluster_cellcount <- cell_counts[1]
   orphan_cellcount <- cell_counts[2]
   list(error_string, filter_category, num_preclusters, num_orphans, precluster_cellcount, orphan_cellcount)
@@ -202,10 +202,10 @@ write_precluster <- function(obs, taxon, mask_layer, taxapath) {
   shapes <- sf::st_as_sf(obs, coords = c("x", "y"), crs = METRIC_EPSG)
   scaled_eps <- dispersal_distance(taxon) * 1000 
 
-  # Create a raster for preclusters
+  # Create a dataframe and raster for preclusters
   preclustered <- buffer_preclustered(shapes, scaled_eps)
   cat("Preclusters:", nrow(preclustered), "\n")
-  precluster_rast <- shape_to_raster(preclustered, taxon, mask_layer, taxonpath)
+  precluster_rast <- shapes_to_raster(preclustered, taxon, mask_layer, taxonpath)
   # Save a plot for fast inspection
   png(file.path(plotpath, paste0(taxon$ala_search_term, "_preclusters.png")))
   plot(precluster_rast, main=paste0(taxon$ala_search_term, " preclusters"))
@@ -215,17 +215,16 @@ write_precluster <- function(obs, taxon, mask_layer, taxapath) {
   left_join(shapes, pixel_freq, copy=TRUE, by=c("precluster" = "value")) %>%
     write_csv(file.path(taxonpath, "preclusters.csv"))
     
-  # Create a raster for orphans
+  # Create a dataframe and raster for orphans
   orphans <- buffer_orphans(shapes, scaled_eps)
-  # cat("Orphans:", nrow(orphans), "\n")
-  orphan_rast <- shape_to_raster(orphans, taxon, mask_layer, taxonpath)
+  orphan_rast <- shapes_to_raster(orphans, taxon, mask_layer, taxonpath)
   # Save a plot for fast inspection
   png(file.path(plotpath, paste0(taxon$ala_search_term, "_orphans.png")))
   plot(orphan_rast, main=paste0(taxon$ala_search_term, " orphans"))
   dev.off()
 
   # Write an orphans csv
-  write_csv(sf_to_df(orphans), file.path(taxonpath, "orphans.csv"))
+  write_csv(orphans, file.path(taxonpath, "orphans.csv"))
 
   # Make a crop template by trimming the empty values from a
   # combined precluster/orphan raster, with some added padding.
@@ -273,16 +272,18 @@ buffer_orphans <- function(shapes, scaled_eps) {
 }
 
 buffer_obs <- function(obs, scaled_eps) {
-  obs %>%
-    sf::st_buffer(dist = scaled_eps) %>% 
+  obs %>% sf::st_buffer(dist = scaled_eps) %>% 
     dplyr::group_by(precluster) %>% 
     dplyr::summarise(precluster = unique(precluster))
 }
 
 # Convert points to raster file matching mask_layer
-shape_to_raster <- function(shape, taxon, mask_layer, taxonpath) {
-  if (length(vect(shape)) > 0) {
-      obs_raster <- terra::rasterize(terra::vect(shape), mask_layer, field = "precluster") 
+shapes_to_raster <- function(shapes, taxon, mask_layer, taxonpath) {
+  print(shapes)
+  shapevect <- terra::vect(shapes)
+  print(shapevect)
+  if (length(shapevect) > 0) {
+      obs_raster <- terra::rasterize(shapevect, mask_layer, field = "precluster") 
   } else {
       mask_layer * 0
   }
