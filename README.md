@@ -230,7 +230,7 @@ aws batch submit-job --job-name circuitscape --job-queue $(terraform output -raw
 For an array of taxa (must be 2 or more jobs, thats just how AWS Batch arrays work)
 
 ```
-aws batch submit-job --array-properties size=$(wc -l batch_jobs.txt) --job-name circuitscape --job-queue $(terraform output -raw queue) --job-definition $(terraform output -raw circuitscape)
+aws batch submit-job --array-properties size=$(wc -l < batch_jobs.txt) --job-name circuitscape --job-queue $(terraform output -raw queue) --job-definition $(terraform output -raw circuitscape)
 ```
 
 
