@@ -77,7 +77,7 @@ To run a specific item, here the 5th taxon, use:
 AWS_BATCH_JOB_ARRAY_INDEX=5 julia --project=. circuitscape.jl
 ```
 
-The jobs are listed in data/job_list.txt, which is output by prefilter.R.
+The jobs are listed in data/batch_jobs.txt, which is output by prefilter.R.
 
 # Cloud Instructions
 
@@ -195,7 +195,7 @@ We can also download all the data to a local directory:
 aws s3 sync s3://genetic-risk-index-bucket/data output_data
 ```
 
-Or just the prefilter/orphan plots:
+Or just the precluster/orphan plots:
 
 ```
 aws s3 sync s3://genetic-risk-index-bucket/data/plots output_plots
@@ -207,27 +207,27 @@ aws s3 sync s3://genetic-risk-index-bucket/data/plots output_plots
 Get the job list:
 
 ```
-aws s3 cp s3://genetic-risk-index-bucket/job_list.txt job_list.txt
+aws s3 cp s3://genetic-risk-index-bucket/data/batch_jobs.txt batch_jobs.txt
 ```
 
 The file will be a list of taxa to run in circuitscape, you can check it to see if it makes sense.
 
 ```
-less job_list.txt
+less batch_jobs.txt
 ```
 
 **⚠  WARNING aws-cli commands can start thousands of containers** 
 
-Be careful to check the contents of your job_list.txt file are what you expect them to be.
+Be careful to check the contents of your batch_jobs.txt file are what you expect them to be.
 
 You can also set the job list, as long as you only include taxa that have been
 output by the R job previously:
 
 ```
-aws s3 cp job_list.txt s3://genetic-risk-index-bucket/job_list.txt 
+aws s3 cp batch_jobs.txt s3://genetic-risk-index-bucket/batch_jobs.txt 
 ```
 
-Now run the first taxon in the list only, or a list of length 1:
+To run the first taxon in the list only as a test, or a list of length 1:
 
 ```
 aws batch submit-job --job-name circuitscape --job-queue $(terraform output -raw queue) --job-definition $(terraform output -raw circuitscape)
@@ -236,7 +236,7 @@ aws batch submit-job --job-name circuitscape --job-queue $(terraform output -raw
 For an array of taxa (must be 2 or more jobs, thats just how AWS Batch arrays work)
 
 ```
-aws batch submit-job --array-properties size=$(wc -l job_list.txt) --job-name circuitscape --job-queue $(terraform output -raw queue) --job-definition $(terraform output -raw circuitscape)
+aws batch submit-job --array-properties size=$(wc -l batch_jobs.txt) --job-name circuitscape --job-queue $(terraform output -raw queue) --job-definition $(terraform output -raw circuitscape)
 ```
 
 
