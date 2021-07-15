@@ -36,7 +36,7 @@ resource "aws_s3_bucket_policy" "bucket_policy" {
       "Sid": "",
       "Effect": "Allow",
       "Principal": "*",
-      "Action": "s3:GetObject",
+      "Action": ["s3:GetObject"],
       "Resource": [
         "${data.aws_s3_bucket.bucket.arn}/habitat.tif",
         "${data.aws_s3_bucket.bucket.arn}/fire_severity.tif",
