@@ -4,8 +4,11 @@
 # taxa is a dataframe, taxonpath is the directory
 # where taxon directries are created
 prepare_resistance_files <- function(taxa, taxapath) {
+  if (nrow(taxa) == 0) {
+    return() 
+  }
   for (i in 1:nrow(taxa)) {
-    taxon <- taxa[i, ] 
+    taxon <- taxa[i, ]
     tryCatch({
       crop_filename <- file.path(taxon_path(taxon, taxapath), "preclusters.tif")
       if (file.exists(crop_filename)) {
@@ -19,6 +22,7 @@ prepare_resistance_files <- function(taxa, taxapath) {
       warning("Failed to download resistance file for ", taxon$ala_search_term, " ", e)
     })
   }
+  return()
 }
 
 # Download the HDM layer for this taxon
