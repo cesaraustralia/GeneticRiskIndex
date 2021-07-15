@@ -102,7 +102,7 @@ and follow the prompt.
 ## Set up an AWS bucket for long-term cloud file storage
 
 Go to https://s3.console.aws.amazon.com and click "create bucket", and define
-a bucket called "genetic-risk-index-bucket". Other names are possible but will
+a bucket called "genetic-risk-index-s3". Other names are possible but will
 need a variable place in a terraform.tfvars file in the terraform directory, 
 for example:
 
@@ -112,7 +112,7 @@ for example:
 ```
 project = "genetic-risk-index"
 project_repo = "https://github.com/cesaraustralia/GeneticRiskIndex"
-s3_bucket = "genetic-risk-index-bucket"
+s3_bucket = "genetic-risk-index-s3"
 aws_credentials = "/home/username/.aws/credentials"
 aws_region = "ap-southeast-2"
 aws_availability_zone = "ap-southeast-2a"
@@ -142,8 +142,8 @@ We first need to upload the our config file and the required `habitat.tif` and
 `fire_severity.tif` layers:
 
 ```
-aws s3 cp habitat.tif s3://genetic-risk-index-bucket/habitat.tif
-aws s3 cp fire_severity.tif s3://genetic-risk-index-bucket/fire_severity.tif
+aws s3 cp habitat.tif s3://genetic-risk-index-s3/habitat.tif
+aws s3 cp fire_severity.tif s3://genetic-risk-index-s3/fire_severity.tif
 ```
 
 These only need to be uploaded once, unless you need to change them. 
@@ -151,13 +151,13 @@ These only need to be uploaded once, unless you need to change them.
 Then copy your `config.toml file`, modified from `config.toml.example` in this repository:
 
 ```
-aws s3 cp config.toml s3://genetic-risk-index-bucket/config.toml
+aws s3 cp config.toml s3://genetic-risk-index-s3/config.toml
 ```
 
 Then we can upload the csv containing the taxa we want to process in this batch:
 
 ```
-aws s3 cp batch_taxa.csv s3://genetic-risk-index-bucket/batch_taxa.csv
+aws s3 cp batch_taxa.csv s3://genetic-risk-index-s3/batch_taxa.csv
 ```
 
 This will likely be repeatedly uploaded to run lists of taxa, as it is unlikely
@@ -181,33 +181,33 @@ aws datasync start-task-execution --task-arn $(terraform output -raw backup-arn)
 We can check that it worked:
 
 ```
-aws s3 ls s3://genetic-risk-index-bucket/data
+aws s3 ls s3://genetic-risk-index-s3/data
 ```
 
 Or visit the s3 console page in a web browser:
 
-https://s3.console.aws.amazon.com/s3/buckets/genetic-risk-index-bucket
+https://s3.console.aws.amazon.com/s3/buckets/genetic-risk-index-s3
 
 
 We can also download all the data to a local directory:
 
 ```
-aws s3 sync s3://genetic-risk-index-bucket/data output_data
+aws s3 sync s3://genetic-risk-index-s3/data output_data
 ```
 
 Or just the precluster/orphan plots:
 
 ```
-aws s3 sync s3://genetic-risk-index-bucket/data/plots output_plots
+aws s3 sync s3://genetic-risk-index-s3/data/plots output_plots
 ```
 
 
 ## Run Circuitscape jobs
 
-Get the job list:
+Copy the job list into your terraform folder:
 
 ```
-aws s3 cp s3://genetic-risk-index-bucket/data/batch_jobs.txt batch_jobs.txt
+aws s3 cp s3://genetic-risk-index-s3/data/batch_jobs.txt batch_jobs.txt
 ```
 
 The file will be a list of taxa to run in circuitscape, you can check it to see if it makes sense.
@@ -220,12 +220,6 @@ less batch_jobs.txt
 
 Be careful to check the contents of your batch_jobs.txt file are what you expect them to be.
 
-You can also set the job list, as long as you only include taxa that have been
-output by the R job previously:
-
-```
-aws s3 cp batch_jobs.txt s3://genetic-risk-index-bucket/batch_jobs.txt 
-```
 
 To run the first taxon in the list only as a test, or a list of length 1:
 
