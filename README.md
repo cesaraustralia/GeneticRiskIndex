@@ -98,10 +98,16 @@ and follow the prompt.
 
 Go to https://s3.console.aws.amazon.com and click "create bucket", and define
 a bucket called "genetic-risk-index-bucket". Other names are possible but will
-need a variable place in a terraform.tfvars file in the terraform directory:
+need a variable place in a terraform.tfvars file in the terraform directory, 
+for example:
 
 ```
-s3_bucket=your-bucket-name
+project = "genetic-risk-index"
+project_repo = "https://github.com/cesaraustralia/GeneticRiskIndex"
+s3_bucket = "genetic-risk-index-bucket"
+aws_credentials = "/home/username/.aws/credentials"
+aws_region = "ap-southeast-2"
+aws_availability_zone = "ap-southeast-2a"
 ```
 
 
