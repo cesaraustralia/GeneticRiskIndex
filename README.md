@@ -31,6 +31,8 @@ get started.
 
 The process of running these scripts is broken into a number of steps:
 
+1. Define an AWS IAM user with admin permissions
+
 1. Define an AWS S3 bucket for data storage throughout the project.
 
 2. Set up all AWS other infrastructure with terraform.
@@ -79,6 +81,9 @@ The jobs are listed in data/job_list.txt, which is output by prefilter.R.
 
 # Cloud Instructions
 
+First set up an IAM user for the project, or multiple IAM users if multiple people
+need access.
+
 ## Set up AWS
 
 `aws cli` handles storing your aws credentials in your system.
@@ -101,6 +106,9 @@ a bucket called "genetic-risk-index-bucket". Other names are possible but will
 need a variable place in a terraform.tfvars file in the terraform directory, 
 for example:
 
+
+## Set up all other infrastructure
+
 ```
 project = "genetic-risk-index"
 project_repo = "https://github.com/cesaraustralia/GeneticRiskIndex"
@@ -111,12 +119,11 @@ aws_availability_zone = "ap-southeast-2a"
 ```
 
 
-## Set up all other infrastructure
-
 To simulate setting up infrastructure, from the command line run:
 
 ```
-cd terraform/setup
+cd terraform
+terraform init
 terraform plan
 ```
 
@@ -135,7 +142,7 @@ We first need to upload the our config file and the required `habitat.tif` and
 `fire_severity.tif` layers:
 
 ```
-aws s3 cp sbv.tif s3://genetic-risk-index-bucket/habitat.tif
+aws s3 cp habitat.tif s3://genetic-risk-index-bucket/habitat.tif
 aws s3 cp fire_severity.tif s3://genetic-risk-index-bucket/fire_severity.tif
 ```
 
@@ -168,7 +175,7 @@ aws batch submit-job --job-name prefilter --job-queue $(terraform output -raw qu
 The name can be anything you like. To back-up data from the run to the amazon s3 bucket:
 
 ```
-aws datasync start-task-execution --task-arn $(terraform output -raw efs-data-backup-arn)
+aws datasync start-task-execution --task-arn $(terraform output -raw backup-arn)
 ```
 
 We can check that it worked:
@@ -236,7 +243,7 @@ aws batch submit-job --array-properties size=$(wc -l job_list.txt) --job-name ci
 Backup again:
 
 ```
-aws datasync start-task-execution --task-arn $(terraform output -raw efs-data-backup-arn)
+aws datasync start-task-execution --task-arn $(terraform output -raw backup-arn)
 ```
 
 ## Run post-processing
