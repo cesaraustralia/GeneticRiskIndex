@@ -16,34 +16,35 @@ resource "aws_s3_bucket_policy" "bucket_policy" {
       "Principal": "*",
       "Action": ["s3:GetObject"],
       "Resource": "${data.aws_s3_bucket.bucket.arn}/*"
-     },
-     {
-       "Sid": "",
-       "Effect": "Allow",
-       "Principal": "*",
-       "Action": [
-         "s3:PutObject", 
-         "s3:GetObject", 
-         "s3:DeleteObject"
-       ],
-       "Resource": [
-         "${data.aws_s3_bucket.bucket.arn}",
-         "${data.aws_s3_bucket.bucket.arn}/*",
-         "${data.aws_s3_bucket.bucket.arn}/job/*"
-         ]
-       },
-       {
-         "Effect": "Allow",
-         "Principal": "*",
-         "Action": "s3:GetObject",
-         "Resource": "arn:aws:s3:::${data.aws_s3_bucket.bucket.arn}/*",
-         "Condition": {
-           "StringEquals": {
-             "s3:ExistingObjectTag/public": "yes"
-           }
-         }
-       }
-     ]
+    },
+    {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": [
+        "s3:PutObject", 
+        "s3:GetObject", 
+        "s3:DeleteObject"
+      ],
+      "Resource": [
+        "${data.aws_s3_bucket.bucket.arn}",
+        "${data.aws_s3_bucket.bucket.arn}/*",
+        "${data.aws_s3_bucket.bucket.arn}/job/*"
+      ]
+    },
+    {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": [
+        "${data.aws_s3_bucket.bucket.arn}/habitat.tif",
+        "${data.aws_s3_bucket.bucket.arn}/fire_severity.tif",
+        "${data.aws_s3_bucket.bucket.arn}/batch_taxa.csv",
+        "${data.aws_s3_bucket.bucket.arn}/config.toml"
+      ]
+    }
+  ]
 }
   POLICY
 }
