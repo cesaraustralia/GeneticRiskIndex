@@ -102,6 +102,15 @@ options(timeout=500)
 # HABITAT_RASTER_PATH %>% terra::rast() %>% plot
 # FIRE_SEVERITY_RASTER_PATH %>% terra::rast() %>% plot
 
+# Get filters for ALA queries, ahead of time as this actually pings the 
+# server to check the filter. Doing this too often can cause ALA to hang.
+ALA_FILTERS = select_filters(
+  # Limit observations by year, basis and state
+  year = TIMESPAN,
+  basisOfRecord = BASIS,
+  stateProvince = STATE
+)
+
 mask_layer <- terra::rast(HABITAT_RASTER_PATH) < 0
 terra::crs(mask_layer) < as.character(sp::CRS(paste0("+init=epsg:", METRIC_EPSG)))
 # plot(mask_layer)

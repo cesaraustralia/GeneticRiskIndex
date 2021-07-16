@@ -46,11 +46,7 @@ add_count_cols <- function(taxa) {
 get_state_counts <- function(taxa) {
   ala_counts(
     taxa = select_taxa(taxa$ala_search_term), 
-    filters = select_filters(
-      year = TIMESPAN,
-      basisOfRecord = BASIS,
-      stateProvince = STATE
-    ),
+    filters = ALA_FILTERS,
     group_by = "species",
     type = "record",
     limit = NULL

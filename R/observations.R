@@ -101,12 +101,7 @@ download_observations <- function(taxon) {
   cat("  Retrieving observations from ALA for ", taxon$ala_search_term, "...\n")
   obs <- ala_occurrences(
     taxa = select_taxa(taxon$ala_search_term),
-    filters = select_filters(
-      # Limit observations by year, basis and state
-      year = TIMESPAN,
-      basisOfRecord = BASIS,
-      stateProvince = STATE
-    )
+    filters = ALA_FILTERS
   )
   cat("  Observations retreived successfully\n")
   return(obs)
