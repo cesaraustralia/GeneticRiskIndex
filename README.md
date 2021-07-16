@@ -178,6 +178,11 @@ The name can be anything you like. To back-up data from the run to the amazon s3
 aws datasync start-task-execution --task-arn $(terraform output -raw backup-arn)
 ```
 
+And check that it has completed:
+```
+aws datasync list-task-executions
+``
+
 We can check that it worked:
 
 ```
@@ -235,10 +240,14 @@ aws batch submit-job --array-properties size=$(wc -l < batch_jobs.txt) --job-nam
 
 
 Backup again:
-
 ```
 aws datasync start-task-execution --task-arn $(terraform output -raw backup-arn)
 ```
+
+And check that it has completed:
+```
+aws datasync list-task-executions
+``
 
 ## Run post-processing
 
