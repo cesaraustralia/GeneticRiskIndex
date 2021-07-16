@@ -1,24 +1,4 @@
-# resource "aws_cloudwatch_log_group" "dockerbuild" {
-#   name = "dockerbuild_${var.project}"
-#   tags = {
-#     Name = "dockerbuild_${var.project}"
-#   }
-# }
-
-# resource "aws_iam_role" "dockerbuild_role" {
-#   name = "${var.project}_dockerbuild_role"
-#   assume_role_policy = "${data.aws_iam_policy_document.dockerbuild_assume_role_policy.json}"
-#   tags = {
-#     Name = "${var.project}_dockerbuild_role"
-#     Created_by = "terraform"
-#   }
-# }
-
-# resource "aws_iam_role_policy" "dockerbuild_role_policy" {
-#   name = "${var.project}_docker_build_role_policy"
-#   role = "${aws_iam_role.dockerbuild_role.name}"
-#   policy = "${data.aws_iam_policy_document.dockerbuild_policy.json}"
-# }
+# Repositories for docker images #########################################
 
 resource "aws_ecr_repository" "r_docker" {
   name = "${var.project}-r"
@@ -35,6 +15,9 @@ resource "aws_ecr_repository" "julia_docker" {
     scan_on_push = false
   }
 }
+
+# Null resources that just run the docker task locally ###################
+# It may be preferable to run these in the cloud at some point.
 
 resource "null_resource" "local_r_docker_build" {
   depends_on = [aws_ecr_repository.r_docker]

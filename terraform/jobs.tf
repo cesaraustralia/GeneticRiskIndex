@@ -1,4 +1,6 @@
+# Define AWS Batch jobs to run R scripts and Julia circuitscape jobs
 
+# Job roles and policy #########################################################
 resource "aws_iam_role" "aws_batch_service_role" {
   name = "aws_batch_service_role"
 
@@ -44,7 +46,7 @@ resource "aws_iam_role_policy_attachment" "task_execution_role_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-
+# Batch environment #########################################################
 resource "aws_batch_compute_environment" "fargate_environment" {
   compute_environment_name = "${var.project}-compute-environment"
 
@@ -64,6 +66,7 @@ resource "aws_batch_compute_environment" "fargate_environment" {
   depends_on = [aws_iam_role_policy_attachment.aws_batch_service_role]
 }
 
+# Batch queue #########################################################
 resource "aws_batch_job_queue" "queue" {
   name = "${var.project}-batch-job-queue"
   state = "ENABLED"
@@ -73,6 +76,9 @@ resource "aws_batch_job_queue" "queue" {
   ]
 }
 
+# Batch jobs #########################################################
+
+# R prefiltering job, runs on 1 container
 resource "aws_batch_job_definition" "prefilter" {
   name = "${var.project}-prefilter"
   type = "container"
@@ -120,6 +126,7 @@ resource "aws_batch_job_definition" "prefilter" {
 CONTAINER_PROPERTIES
 }
 
+# R postprocessing job, runs on 1 container
 resource "aws_batch_job_definition" "postprocessing" {
   name = "${var.project}-prefilter"
   type = "container"
@@ -167,6 +174,7 @@ resource "aws_batch_job_definition" "postprocessing" {
 CONTAINER_PROPERTIES
 }
 
+# Julia circuitscape job, runs on an array of many containers
 resource "aws_batch_job_definition" "circuitscape" {
   name = "${var.project}_circuitscape"
   type = "container"
@@ -216,6 +224,7 @@ CONTAINER_PROPERTIES
 }
 
 
+# Output variable for aws batch cli commands ########################### 
 output "queue" {
   description = "The batch queue"
   value = aws_batch_job_queue.queue.name
@@ -225,7 +234,6 @@ output "prefilter" {
   description = "Prefilter batch job"
   value = aws_batch_job_definition.prefilter.name
 }
-
 
 output "circuitscape" {
   description = "Circuitscape batch job"
