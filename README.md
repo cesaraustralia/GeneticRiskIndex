@@ -22,27 +22,31 @@ Software needed to run these scripts locally:
 
 On linux and mac these can be installed with most package managers (e.g. brew,
 apt, pacman) and run from the command line. It is recommended these scripts are
-run from linux, either in a local machine, a virtual machine or on a server.
+run from linux, either in a local machine, a virtual machine or on a server. The
+R and Julia scripts may be run from any machine as stand-alone scripts for
+testing, without any AWS cloud components.
 
-Once terraform and aws-cli are installed, clone or download this repository to
-get started.
+Once terraform, docker and aws-cli are installed, clone or download this
+repository to get started.
 
 # Overview
 
 The process of running these scripts is broken into a number of steps:
 
-1. Define an AWS IAM user with admin permissions
+1. Test the scripts in a local R and Julia environment
 
-1. Define an AWS S3 bucket for data storage throughout the project.
+2. Define an AWS IAM user with admin permissions
 
-2. Set up all AWS other infrastructure with terraform.
+3. Define an AWS S3 bucket for data storage throughout the project.
 
-3. Run prefiltering, circuitscape and postprocessing iteratively until all tasks
+4. Set up all AWS other infrastructure with terraform.
+
+5. Run prefiltering, circuitscape and postprocessing iteratively until all tasks
 are working and outputs make sense.
 
-4. Back up all data to the S3 bucket. This can also happen during step 2.
+6. Back up all data to the S3 bucket. This can also happen during step 2.
 
-5. Destroy all AWS infrastructure using terraform, besides the S3 bucket.
+7. Destroy all AWS infrastructure using terraform, besides the S3 bucket.
 
 
 # Local Instructions
@@ -96,18 +100,20 @@ Run:
 aws configure
 ```
 
-and follow the prompt.
+and follow the prompt, using the credentials of your IAM user.
 
 
 ## Set up an AWS bucket for long-term cloud file storage
 
-Go to https://s3.console.aws.amazon.com and click "create bucket", and define
-a bucket called "genetic-risk-index-s3". Other names are possible but will
-need a variable place in a terraform.tfvars file in the terraform directory, 
-for example:
+Logged in as your IAM user, Go to https://s3.console.aws.amazon.com and click
+"create bucket", and define a bucket called "genetic-risk-index-s3" or another
+name you define in your `terraform.tfvars` file. To set access permissions, edit
+the bucket policy on the "Permissions" tab, and paste in the `s3_policy.json`
+file in this repository.
 
+## Set up all other AWS infrastructure
 
-## Set up all other infrastructure
+First define your terraform variables, for example:
 
 ```
 project = "genetic-risk-index"
@@ -117,7 +123,6 @@ aws_credentials = "/home/username/.aws/credentials"
 aws_region = "ap-southeast-2"
 aws_availability_zone = "ap-southeast-2a"
 ```
-
 
 To simulate setting up infrastructure, from the command line run:
 

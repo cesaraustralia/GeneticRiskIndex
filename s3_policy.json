@@ -6,7 +6,7 @@
       "Effect": "Allow",
       "Principal": "*",
       "Action": ["s3:GetObject"],
-      "Resource": "${data.aws_s3_bucket.bucket.arn}/*"
+      "Resource": "arn:aws:s3:::genetic-risk-index-bucket/*"
     },
     {
       "Sid": "",
@@ -18,9 +18,9 @@
         "s3:DeleteObject"
       ],
       "Resource": [
-        "${data.aws_s3_bucket.bucket.arn}",
-        "${data.aws_s3_bucket.bucket.arn}/*",
-        "${data.aws_s3_bucket.bucket.arn}/job/*"
+        "arn:aws:s3:::genetic-risk-index-bucket",
+        "arn:aws:s3:::genetic-risk-index-bucket/*",
+        "arn:aws:s3:::genetic-risk-index-bucket/job/*"
       ]
     },
     {
@@ -29,10 +29,10 @@
       "Principal": "*",
       "Action": ["s3:GetObject"],
       "Resource": [
-        "${data.aws_s3_bucket.bucket.arn}/habitat.tif",
-        "${data.aws_s3_bucket.bucket.arn}/fire_severity.tif",
-        "${data.aws_s3_bucket.bucket.arn}/batch_taxa.csv",
-        "${data.aws_s3_bucket.bucket.arn}/config.toml"
+        "arn:aws:s3:::genetic-risk-index-bucket/habitat.tif",
+        "arn:aws:s3:::genetic-risk-index-bucket/fire_severity.tif",
+        "arn:aws:s3:::genetic-risk-index-bucket/batch_taxa.csv",
+        "arn:aws:s3:::genetic-risk-index-bucket/config.toml"
       ]
     }
   ]
