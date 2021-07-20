@@ -22,5 +22,5 @@ BASIS = "HumanObservation"
 # Wether to throw errors immediately or just store them and continue
 THROW_ERRORS = false
 # Allow sensitivity analysis on eps values
-EPSILON_SENSITIVITY_NAME = ""
+SENSITIVITY_SUFFIX = ""
 EPSILON_SENSITIVITY_SCALAR = 1
