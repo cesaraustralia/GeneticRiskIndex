@@ -224,7 +224,7 @@ write_precluster <- function(obs, taxon, mask_layer, taxapath) {
   # Make a crop template by trimming the empty values from a
   # combined precluster/orphan raster, with some added padding.
   crop_rast <- terra::merge(precluster_rast, orphan_rast) %>% 
-    trim(padding=0)
+    padded_trim()
 
   # Crop and write rasters
   precluster_filename <- file.path(taxonpath, "preclusters.tif")
@@ -284,6 +284,28 @@ shapes_to_raster <- function(shapes, taxon, mask_layer, taxonpath) {
   }
 }
 
+# Calculate extension to raster and extend manually, because terra::trim 
+# with padding=X has a bug if the raster does not contain the trimmed area
+padded_trim <- function(rast, padding=10) {
+  xresolution <- xres(rast)
+  yresolution <- yres(rast)
+  ext <- raster::extent(x)
+  xrange <- raster::xmax(x) - raster::xmin(x) # number of columns
+  yrange <- raster::ymax(x) - raster::ymin(x) # number of rows
+  xPix <- ceiling(xrange / xresolution)
+  yPix <- ceiling(yrange / yresolution)
+  xdif <- ((padding * xresolution) - xrange) / 2 # the difference of extent divided by 2 to split on both sides
+  ydif <- ((padding * yresolution) - yrange) / 2
+  ext@xmin <- raster::xmin(x) - xdif
+  ext@xmax <- raster::xmax(x) + xdif
+  ext@ymin <- raster::ymin(x) - ydif
+  ext@ymax <- raster::ymax(x) + ydif
+
+  # Trim them pad to the calculated extent
+  trimmed <- trim(rast)
+  padded <- extend(trimmed, ext)
+  return(padded)
+}
 
 # Label taxa that we don't need to process due to cluster numbers ######################################
 
