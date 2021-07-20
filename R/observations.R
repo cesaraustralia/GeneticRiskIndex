@@ -20,7 +20,7 @@ process_observations <- function(taxa, mask_layer, taxapath, force_download=FALS
 
     # Throw errors as normal if anything goes wrong
     if (throw_errors) {
-      try_taxon_observations(taxon, taxapath, force_download)
+      out <- try_taxon_observations(taxon, taxapath, force_download)
     } else {
       out <- tryCatch({
         try_taxon_observations(taxon, taxapath, force_download)
@@ -287,23 +287,24 @@ shapes_to_raster <- function(shapes, taxon, mask_layer, taxonpath) {
 # Calculate extension to raster and extend manually, because terra::trim 
 # with padding=X has a bug if the raster does not contain the trimmed area
 padded_trim <- function(rast, padding=10) {
-  xresolution <- xres(rast)
-  yresolution <- yres(rast)
-  ext <- raster::extent(x)
-  xrange <- raster::xmax(x) - raster::xmin(x) # number of columns
-  yrange <- raster::ymax(x) - raster::ymin(x) # number of rows
+  xresolution <- terra::xres(rast)
+  yresolution <- terra::yres(rast)
+  xrange <- terra::xmax(rast) - terra::xmin(rast) # number of columns
+  yrange <- terra::ymax(rast) - terra::ymin(rast) # number of rows
   xPix <- ceiling(xrange / xresolution)
   yPix <- ceiling(yrange / yresolution)
   xdif <- ((padding * xresolution) - xrange) / 2 # the difference of extent divided by 2 to split on both sides
   ydif <- ((padding * yresolution) - yrange) / 2
-  ext@xmin <- raster::xmin(x) - xdif
-  ext@xmax <- raster::xmax(x) + xdif
-  ext@ymin <- raster::ymin(x) - ydif
-  ext@ymax <- raster::ymax(x) + ydif
+  x <- ext(
+      terra::xmin(rast) - xdif, 
+      terra::xmax(rast) + xdif,
+      terra::ymin(rast) - ydif,
+      terra::ymax(rast) + ydif
+  )
 
   # Trim them pad to the calculated extent
-  trimmed <- trim(rast)
-  padded <- extend(trimmed, ext)
+  trimmed <- terra::trim(rast)
+  padded <- terra::extend(trimmed, x)
   return(padded)
 }
 
