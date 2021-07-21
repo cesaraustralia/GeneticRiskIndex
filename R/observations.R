@@ -227,9 +227,9 @@ write_precluster <- function(obs, taxon, mask_layer, taxapath) {
     trim(padding=0)
 
   # Crop and write rasters
-  precluster_filename <- file.path(taxonpath, sensitivity_name("preclusters"), ".tif")
-  orphan_filename <- file.path(taxonpath, sensitivity_name("orphans"), ".tif")
-  short_circuit_filename <- file.path(taxonpath, sensitivity_name("short_circuit"), ".tif")
+  precluster_filename <- file.path(taxonpath, paste0(sensitivity_name("preclusters"), ".tif"))
+  orphan_filename <- file.path(taxonpath, paste0(sensitivity_name("orphans"), ".tif"))
+  short_circuit_filename <- file.path(taxonpath, paste0(sensitivity_name("short_circuit"), ".tif"))
   crop(precluster_rast, crop_rast, filename=precluster_filename, overwrite=TRUE)
   crop(orphan_rast, crop_rast, filename=orphan_filename, overwrite=TRUE)
   # Make a short circuit and orphans file, as the short circuit may
@@ -244,8 +244,8 @@ write_precluster <- function(obs, taxon, mask_layer, taxapath) {
 # Add the cell counts
 add_cell_counts <- function() {
   taxonpath = taxon_path(taxon)
-  orphans_rast <- rast(file.path(taxonpath, sensitivity_name("orphans"), ".tif"))
-  preclusters_rast <- rast(file.path(taxonpath, sensitivity_name("preclusters"), ".tif"))
+  orphans_rast <- rast(file.path(taxonpath, paste0(sensitivity_name("orphans"), ".tif")))
+  preclusters_rast <- rast(file.path(taxonpath, paste0(sensitivity_name("preclusters"), ".tif")))
   orphan_cells <- count(orphans_rast)
   preclusters_cells <- count(preclusters_rast)
   mutate(taxa, prop_preclusters = prop_preclusters, prop_orphans = prop_orphans)
