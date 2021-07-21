@@ -162,7 +162,7 @@ add_euclidan_coords <- function(obs) {
 
 # Scan preclusters and add precluster index to observations
 scan_clusters <- function(obs, eps) {
-  preclusters <- fpc::dbscan(obs[, c("x", "y")], eps = eps * 1000, MinPts = 3)
+  preclusters <- fpc::dbscan(obs[, c("x", "y")], eps = eps * 1000 * EPSILON_SENSITIVITY_SCALAR, MinPts = 3)
   mutate(obs, precluster = preclusters$cluster)
 }
 
@@ -195,31 +195,31 @@ write_precluster <- function(obs, taxon, mask_layer, taxapath) {
   dir.create(plotpath, recursive = TRUE)
   taxonpath <- taxon_path(taxon, taxapath)
   shapes <- sf::st_as_sf(obs, coords = c("x", "y"), crs = METRIC_EPSG)
-  scaled_eps <- dispersal_distance(taxon) * 1000 
+  scaled_eps <- dispersal_distance(taxon) * 1000 * EPSILON_SENSITIVITY_SCALAR
 
   # Create a dataframe and raster for preclusters
   preclustered <- buffer_preclustered(shapes, scaled_eps)
   cat("Preclusters:", nrow(preclustered), "\n")
   precluster_rast <- shapes_to_raster(preclustered, taxon, mask_layer, taxonpath)
   # Save a plot for fast inspection
-  png(file.path(plotpath, paste0(taxon$ala_search_term, "_preclusters.png")))
-  plot(precluster_rast, main=paste0(taxon$ala_search_term, " preclusters"))
+  png(file.path(plotpath, paste0(sensitivity_name(taxon$ala_search_term, "preclusters"), ".png")))
+  plot(precluster_rast, main=sensitivity_title(taxon$ala_search_term, "preclusters"))
   dev.off()
   # Write a preclusters csv, with cluster numbers attached
   pixel_freq <- freq(precluster_rast)
   left_join(shapes, pixel_freq, copy=TRUE, by=c("precluster" = "value")) %>%
-    write_csv(file.path(taxonpath, "preclusters.csv"))
+    write_csv(file.path(taxonpath, paste0(sensitivity_name("preclusters"), ".csv")))
     
   # Create a dataframe and raster for orphans
   orphans <- buffer_orphans(shapes, scaled_eps)
   orphan_rast <- shapes_to_raster(orphans, taxon, mask_layer, taxonpath)
   # Save a plot for fast inspection
-  png(file.path(plotpath, paste0(taxon$ala_search_term, "_orphans.png")))
-  plot(orphan_rast, main=paste0(taxon$ala_search_term, " orphans"))
+  png(file.path(plotpath, paste0(sensitivity_name(taxon$ala_search_term, "orphans"), ".png")))
+  plot(orphan_rast, main=sensitivity_title(taxon$ala_search_term, "orphans"))
   dev.off()
 
   # Write an orphans csv
-  write_csv(orphans, file.path(taxonpath, "orphans.csv"))
+  write_csv(orphans, file.path(taxonpath, paste0(sensitivity_name("orphans"), ".csv")))
 
   # Make a crop template by trimming the empty values from a
   # combined precluster/orphan raster, with some added padding.
@@ -227,9 +227,9 @@ write_precluster <- function(obs, taxon, mask_layer, taxapath) {
     trim(padding=0)
 
   # Crop and write rasters
-  precluster_filename <- file.path(taxonpath, "preclusters.tif")
-  orphan_filename <- file.path(taxonpath, "orphans.tif")
-  short_circuit_filename <- file.path(taxonpath, "short_circuit.tif")
+  precluster_filename <- file.path(taxonpath, paste0(sensitivity_name("preclusters"), ".tif"))
+  orphan_filename <- file.path(taxonpath, paste0(sensitivity_name("orphans"), ".tif"))
+  short_circuit_filename <- file.path(taxonpath, paste0(sensitivity_name("short_circuit"), ".tif"))
   crop(precluster_rast, crop_rast, filename=precluster_filename, overwrite=TRUE)
   crop(orphan_rast, crop_rast, filename=orphan_filename, overwrite=TRUE)
   # Make a short circuit and orphans file, as the short circuit may
@@ -244,8 +244,8 @@ write_precluster <- function(obs, taxon, mask_layer, taxapath) {
 # Add the cell counts
 add_cell_counts <- function() {
   taxonpath = taxon_path(taxon)
-  orphans_rast <- rast(file.path(taxonpath, "orphans.tif"))
-  preclusters_rast <- rast(file.path(taxonpath, "preclusters.tif"))
+  orphans_rast <- rast(file.path(taxonpath, paste0(sensitivity_name("orphans"), ".tif")))
+  preclusters_rast <- rast(file.path(taxonpath, paste0(sensitivity_name("preclusters"), ".tif")))
   orphan_cells <- count(orphans_rast)
   preclusters_cells <- count(preclusters_rast)
   mutate(taxa, prop_preclusters = prop_preclusters, prop_orphans = prop_orphans)

@@ -10,7 +10,7 @@ prepare_resistance_files <- function(taxa, taxapath) {
   for (i in 1:nrow(taxa)) {
     taxon <- taxa[i, ]
     tryCatch({
-      crop_filename <- file.path(taxon_path(taxon, taxapath), "preclusters.tif")
+      crop_filename <- file.path(taxon_path(taxon, taxapath), paste0(sensitivity_name("preclusters"), ".tif"))
       if (file.exists(crop_filename)) {
         if (taxon$resist_model_type[[1]] == "Species") {
           download_hdm(taxon, taxapath, crop_filename)

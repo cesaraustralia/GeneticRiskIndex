@@ -21,3 +21,6 @@ TIME_END = 2021
 BASIS = "HumanObservation"
 # Wether to throw errors immediately or just store them and continue
 THROW_ERRORS = false
+# Allow sensitivity analysis on eps values
+SENSITIVITY_SUFFIX = ""
+EPSILON_SENSITIVITY_SCALAR = 1

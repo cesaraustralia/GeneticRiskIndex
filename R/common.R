@@ -42,6 +42,14 @@ maybe_download <- function(url, path) {
   }
 }
 
+sensitivity_name <- function(...) {
+  paste(..., SENSITIVITY_SUFFIX, sep="_")
+}
+
+sensitivity_title <- function(...) {
+  paste(..., SENSITIVITY_SUFFIX, sep=" ")
+}
+
 # Run parameters ######################################################################
 
 # Primary path for all input data
