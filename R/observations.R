@@ -20,7 +20,7 @@ process_observations <- function(taxa, mask_layer, taxapath, force_download=FALS
 
     # Throw errors as normal if anything goes wrong
     if (throw_errors) {
-      try_taxon_observations(taxon, taxapath, force_download)
+      out <- try_taxon_observations(taxon, taxapath, force_download)
     } else {
       out <- tryCatch({
         try_taxon_observations(taxon, taxapath, force_download)
