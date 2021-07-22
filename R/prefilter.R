@@ -71,7 +71,7 @@ nrow(preclustered_isolation_taxa)
 # categorized_taxa <- left_join(precategorized_taxa, preclustered_isolation_taxa, by="ala_search_term")
 
 # FIXED by:
-# getting the different columns form preclustered_isolation_taxa (*order matters here*)
+# get the added columns form preclustered_isolation_taxa (*order matters here*)
 diff_cols <- setdiff(names(preclustered_isolation_taxa), names(precategorized_taxa))
 # first update the precategorized_taxa witt matching columns form preclustered_isolation_taxa
 # then left_join with the remaining columns in preclustered_isolation_taxa
