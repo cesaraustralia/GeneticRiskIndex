@@ -68,7 +68,17 @@ nrow(preclustered_isolation_taxa)
 # FIXME: this duplicates columns giving them x/y suffixes. The idea is to fill in precategorized_taxa with
 # any new columns from preclustered_isolation_taxa, and use values from preclustered_isolation_taxa
 # for other columns, where they are different.
-categorized_taxa <- left_join(precategorized_taxa, preclustered_isolation_taxa, by="ala_search_term")
+
+# get the added columns form preclustered_isolation_taxa (*order matters here*)
+diff_cols <- setdiff(names(preclustered_isolation_taxa), names(precategorized_taxa))
+# first update the precategorized_taxa witt matching columns form preclustered_isolation_taxa
+# then left_join with the remaining columns in preclustered_isolation_taxa
+categorized_taxa <- rows_update(precategorized_taxa, 
+                                preclustered_isolation_taxa[, names(precategorized_taxa)],
+                                by = "ala_search_term") %>% 
+  left_join(preclustered_isolation_taxa[, c("ala_search_term", diff_cols)],
+            by = "ala_search_term")
+
 write_csv(categorized_taxa, file.path(groupingspath, "catagorized_taxa.csv"))
 head(categorized_taxa)
 categorized_taxa$error
