@@ -52,7 +52,7 @@ nrow(isolation_taxa)
 head(isolation_taxa)
 
 # load/download, filter and precluster observations for all taxa
-preclustered_isolation_taxa <- process_observations(isolation_taxa, mask_layer, taxapath, throw_errors=THROW_ERRORS)
+preclustered_isolation_taxa <- process_observations(isolation_taxa, mask_layer, taxapath, throw_errors=TRUE)
 # FIXME: there are lots of errors here, something to do with SF coercion. 
 # Use throw_errors=TRUE to use traceback()
 preclustered_isolation_taxa$error
